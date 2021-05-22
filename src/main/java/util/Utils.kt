@@ -15,7 +15,7 @@ sealed class Utils {
         trustManagerFactory.init(keyStore)
         sslContext.init(null, trustManagerFactory.trustManagers, SecureRandom())
 
-        return {url: URL ->
+        return { url: URL ->
             val conn = url.openConnection() as HttpsURLConnection
             conn.sslSocketFactory = sslContext.socketFactory
             conn
