@@ -1,7 +1,6 @@
 package wrapper
 
-import constants.AO3Constant
-import constants.AutoCompleteField
+import constants.*
 import exception.InvalidLoginException
 import model.SearchQuery
 import model.result.AutoCompleteResult
@@ -29,11 +28,11 @@ import java.net.URLEncoder
  */
 class AO3Wrapper(
     private val urlConnection: (URL) -> HttpURLConnection,
-    private val base_loc: String = AO3Constant.ao3_url,
-    private val search_loc: String = AO3Constant.ao3_search,
-    private val login_loc: String = AO3Constant.ao3_login,
-    private val auto_complete: (String, String) -> String = AO3Constant.ao3_autocomplete,
-    private val work_location: (work_id: Int, chapter_id: Int) -> String = AO3Constant.ao3_work,
+    private val base_loc: String = ao3_url,
+    private val search_loc: String = ao3_search,
+    private val login_loc: String = ao3_login,
+    private val auto_complete: (String, String) -> String = ao3_autocomplete,
+    private val work_location: (work_id: Int, chapter_id: Int) -> String = ao3_work,
 ) {
 
     var searchWrapper = Wrapper(SearchParser())
