@@ -2,11 +2,8 @@ package model
 
 import constants.work_properties.*
 import constants.work_properties.SearchQueryParam.*
-import java.net.URLEncoder
-import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets
-import java.util.*
-import java.util.function.Consumer
+import util.Utils.encode
+import util.Utils.encodeParameter
 
 class SearchQuery(
     query: String? = null,
@@ -34,67 +31,93 @@ class SearchQuery(
 ) {
 
     companion object {
-        fun encode(str: String, charset: Charset = StandardCharsets.UTF_8): String {
-            return URLEncoder.encode(str, charset)
+        val SUFFIX: String = "utf8=${encode("✓")}"
+    }
+
+    private val searchString = { header: String ->
+        val sb = StringBuilder()
+        query?.let {
+            sb.append(encodeSearchQuery(header, QUERY, it))
         }
-
-        val OPEN_BRACE: String = encode("[")
-        val CLOSED_BRACE: String = encode("]")
-        val SUFFIX: String = "utf8=${encode("✓")}" //&commit=Search"
+        title?.let {
+            sb.append(encodeSearchQuery(header, TITLE, it))
+        }
+        creator?.let {
+            sb.append(encodeSearchQuery(header, CREATOR, it))
+        }
+        revisedAt?.let {
+            sb.append(encodeSearchQuery(header, REVISED_AT, it))
+        }
+        completionStatus?.let {
+            sb.append(encodeSearchQuery(header, COMPLETE, it.search_param))
+        }
+        crossover?.let {
+            sb.append(encodeSearchQuery(header, CROSSOVER, it.search_param))
+        }
+        single_chapter?.let {
+            sb.append(encodeSearchQuery(header, SINGLE_CHAPTER, it.search_param.toString()))
+        }
+        wordCount?.let {
+            sb.append(encodeSearchQuery(header, WORD_COUNT, it))
+        }
+        language?.let {
+            sb.append(encodeSearchQuery(header, LANGUAGE, it.search_param))
+        }
+        fandoms?.let {
+            sb.append(encodeSearchQuery(header, FANDOM, it))
+        }
+        rating?.let {
+            sb.append(encodeSearchQuery(header, RATING, it.search_param.toString()))
+        }
+        warning?.let {
+            for (contentWarningValue in it)
+                sb.append(encodeSearchQuery(header, WARNING, contentWarningValue.search_param.toString(), true))
+        }
+        category?.let {
+            for (categoryValue in it)
+                sb.append(encodeSearchQuery(header, CATEGORY, categoryValue.search_param.toString(), true))
+        }
+        characters?.let {
+            sb.append(encodeSearchQuery(header, CHARACTER_NAME, it))
+        }
+        relationships?.let {
+            sb.append(encodeSearchQuery(header, RELATIONSHIP_NAMES, it))
+        }
+        additionalTags?.let {
+            sb.append(encodeSearchQuery(header, ADDITIONAL_TAGS, it))
+        }
+        hits?.let {
+            sb.append(encodeSearchQuery(header, HITS, it))
+        }
+        kudos?.let {
+            sb.append(encodeSearchQuery(header, KUDOS, it))
+        }
+        comments?.let {
+            sb.append(encodeSearchQuery(header, COMMENTS, it))
+        }
+        bookmarks?.let {
+            sb.append(encodeSearchQuery(header, BOOKMARKS, it))
+        }
+        sortColumn?.let {
+            sb.append(encodeSearchQuery(header, COLUMN, it.search_param))
+        }
+        sortDirection?.let {
+            sb.append(encodeSearchQuery(header, DIRECTION, it.search_param))
+        }
+        sb
     }
 
-    private val queryParamMap: EnumMap<SearchQueryParam, String> = EnumMap(SearchQueryParam::class.java)
-    private val categoricalQueryParamMap: EnumMap<SearchQueryParam, Set<String>> = EnumMap(SearchQueryParam::class.java)
-
-    init {
-        queryParamMap[QUERY] = query
-        queryParamMap[TITLE] = title
-        queryParamMap[CREATOR] = creator
-        queryParamMap[REVISED_AT] = revisedAt
-        queryParamMap[COMPLETE] = completionStatus?.search_param
-        queryParamMap[CROSSOVER] = crossover?.search_param
-        queryParamMap[SINGLE_CHAPTER] = single_chapter?.search_param?.toString()
-        queryParamMap[WORD_COUNT] = wordCount
-        queryParamMap[LANGUAGE] = language?.search_param
-        queryParamMap[FANDOM] = fandoms
-        queryParamMap[RATING] = rating?.search_param?.toString()
-        categoricalQueryParamMap[WARNING] = warning?.map { it.search_param.toString() }?.toSet()
-        categoricalQueryParamMap[CATEGORY] = category?.map { it.search_param.toString() }?.toSet()
-        queryParamMap[CHARACTER_NAME] = characters
-        queryParamMap[RELATIONSHIP_NAMES] = relationships
-        queryParamMap[ADDITIONAL_TAGS] = additionalTags
-        queryParamMap[HITS] = hits
-        queryParamMap[KUDOS] = kudos
-        queryParamMap[COMMENTS] = comments
-        queryParamMap[BOOKMARKS] = bookmarks
-        queryParamMap[COLUMN] = sortColumn?.search_param
-        queryParamMap[DIRECTION] = sortDirection?.search_param
-    }
+    private fun encodeSearchQuery(
+        header: String,
+        searchQueryParam: SearchQueryParam,
+        value: String,
+        array: Boolean = false
+    ) = encodeParameter("$header[${searchQueryParam.raw}]", value, array) + "&"
 
     fun searchString(include: Boolean = true): String {
-        val builder = StringBuilder()
-        queryParamMap.forEach { (parameter, value) ->
-            if (value != null)
-                builder.append("${if (include) "" else "exclude_"}work_search")
-                    .append(OPEN_BRACE)
-                    .append(parameter.raw)
-                    .append("$CLOSED_BRACE=")
-                    .append(encode(value))
-                    .append("&")
-        }
-        categoricalQueryParamMap.forEach { (parameter, value) ->
-            value?.forEach(Consumer {
-                builder.append("${if (include) "" else "exclude_"}work_search")
-                    .append(OPEN_BRACE)
-                    .append(parameter.raw)
-                    .append("$CLOSED_BRACE$OPEN_BRACE$CLOSED_BRACE=")
-                    .append(encode(it))
-                    .append("&")
-            })
-        }
+        val builder = searchString("${if (include) "" else "exclude_"}work_search")
         builder.append(SUFFIX)
         return builder.toString()
     }
-
 
 }
