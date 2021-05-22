@@ -1,13 +1,23 @@
 package util
 
 import java.net.URL
+import java.net.URLEncoder
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 import java.security.KeyStore
 import java.security.SecureRandom
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 
-sealed class Utils {
+object Utils {
+
+    private val encodedArrayBraces = encode("[]")
+
+    fun encodeParameter(name: String, value: String, array: Boolean = false) =
+        "${encode(name)}${if (array) encodedArrayBraces else ""}=${encode(value)}"
+
+    fun encode(str: String, charset: Charset = StandardCharsets.UTF_8): String = URLEncoder.encode(str, charset)
 
     fun generateHttpsConnection(keyStore: KeyStore): (URL) -> HttpsURLConnection {
         val sslContext = SSLContext.getInstance("SSL")
