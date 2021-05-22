@@ -8,16 +8,13 @@ import model.result.AutoCompleteResult
 import model.result.SearchResult
 import model.user.Session
 import model.work.Work
-import util.Utils
 import wrapper.parser.AutoCompleteParser
 import wrapper.parser.LoginPageParser
 import wrapper.parser.SearchParser
-import java.io.File
 import java.net.HttpCookie
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
-import java.security.KeyStore
 
 /**
  * AO3wrapper
@@ -121,13 +118,4 @@ class AO3Wrapper(
         conn.disconnect()
     }
 
-}
-
-fun main() {
-    lateinit var aO3Wrapper: AO3Wrapper
-    val file = File("./localconfig/password")
-    file.inputStream().bufferedReader().use {
-        aO3Wrapper = AO3Wrapper(Utils.generateHttpsConnection(KeyStore.getInstance(File("./localconfig/ao3_cert"), it.readText().toCharArray())))
-    }
-    aO3Wrapper.login("a", "a")
 }
