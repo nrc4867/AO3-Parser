@@ -1,6 +1,6 @@
 package model.user
 
-data class Session(val session_id: String?, val remember_user_token: String?, val userCredentials: String? = "1") {
+data class Session(val session_id: String? = null, val remember_user_token: String? = null, val userCredentials: String? = "1") {
     fun getCookie(): String {
         val stringBuilder = StringBuilder()
 

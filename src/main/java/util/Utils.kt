@@ -4,13 +4,14 @@ import java.net.URL
 import java.net.URLEncoder
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
+import java.net.URLEncoder
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 import java.security.KeyStore
 import java.security.SecureRandom
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
-
-object Utils {
 
     private val encodedArrayBraces = encode("[]")
 
@@ -25,11 +26,9 @@ object Utils {
         trustManagerFactory.init(keyStore)
         sslContext.init(null, trustManagerFactory.trustManagers, SecureRandom())
 
-        return {url: URL ->
-            val conn = url.openConnection() as HttpsURLConnection
-            conn.sslSocketFactory = sslContext.socketFactory
-            conn
-        }
+    return { url: URL ->
+        val conn = url.openConnection() as HttpsURLConnection
+        conn.sslSocketFactory = sslContext.socketFactory
+        conn
     }
-
 }
