@@ -45,10 +45,14 @@ class SearchParser : Parser<SearchResult> {
 
         val resultsFound: Int = getResultsFound(resultsFoundRegex, mainBody.getElementsByTag("h3")[0].text(), 0)
 
-        val navigation = mainBody.getElementsByAttributeValue("role", "navigation")[1]
-        val page = navigation.getElementsByClass("current")[0].text().toInt()
-        val pageButtons = navigation.getElementsByTag("a")
-        val pages: Int = pageButtons[pageButtons.size - 2].text().toInt()
+        var page = 1
+        var pages = 1
+        if (mainBody.getElementsByAttributeValue("role", "navigation").size > 1) {
+            val navigation = mainBody.getElementsByAttributeValue("role", "navigation")[1]
+            page = navigation.getElementsByClass("current")[0].text().toInt()
+            val pageButtons = navigation.getElementsByTag("a")
+            pages = pageButtons[pageButtons.size - 2].text().toInt()
+        }
 
         val works = ArrayList<Work>(20)
 

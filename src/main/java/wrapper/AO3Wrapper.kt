@@ -1,6 +1,8 @@
 package wrapper
 
 import constants.*
+import constants.work_properties.SortColumn
+import constants.work_properties.SortDirection
 import exception.InvalidLoginException
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -14,11 +16,13 @@ import io.ktor.http.*
 import io.ktor.utils.io.core.*
 import model.SearchQuery
 import model.result.AutoCompleteResult
+import model.result.ChapterQueryResult
 import model.result.SearchResult
 import model.user.Session
 import model.work.Work
 import util.*
 import wrapper.parser.AutoCompleteParser
+import wrapper.parser.ChapterParser
 import wrapper.parser.LoginPageParser
 import wrapper.parser.SearchParser
 import java.net.HttpCookie
@@ -42,10 +46,12 @@ class AO3Wrapper(
     private val search_loc: String = ao3_search,
     private val login_loc: String = ao3_login,
     private val auto_complete: (String, String) -> String = ao3_autocomplete,
+    private val chapter_navigation: (work_id: Int) -> String = ao3_chapter_navigation,
     private val work_location: (work_id: Int, chapter_id: Int) -> String = ao3_work,
 ) : Logging, Closeable {
 
     var searchWrapper = Wrapper(SearchParser())
+    var chapterNavigationWrapper = Wrapper(ChapterParser())
     var autoCompleteWrapper = Wrapper(AutoCompleteParser())
     var loginWrapper = Wrapper(LoginPageParser())
 
@@ -63,7 +69,29 @@ class AO3Wrapper(
         return searchWrapper.read(response.receive())
     }
 
-    fun checkUpdate(work: List<Work>, session: Session? = null, rateLimit: Int = 600): List<Work> {
+    suspend fun getWorksByID(
+        workIds: List<Int>,
+        session: Session? = null,
+        sortColumn: SortColumn = SortColumn.DATE_UPDATED,
+        sortDirection: SortDirection = SortDirection.DESCENDING
+    ): List<Work> {
+        val works: MutableList<Work> = mutableListOf()
+        val searchQuery = createIDSearchString(workIds)
+        var currentPage = 1
+        var endPage: Int
+        do {
+            val result = search(
+                SearchQuery(query = searchQuery, sortColumn = sortColumn, sortDirection = sortDirection),
+                session, currentPage
+            )
+            works.addAll(result.works)
+            endPage = result.pages
+            currentPage++
+        } while (currentPage < endPage)
+        return works
+    }
+
+    fun checkUpdate(work: List<Work>, session: Session? = null): List<Work> {
         return emptyList()
     }
 
@@ -76,6 +104,18 @@ class AO3Wrapper(
             }
 
         return autoCompleteWrapper.read(response.receive())
+    }
+
+    suspend fun getChapters(work: Work, session: Session? = null): ChapterQueryResult = getChapters(work.workId, session)
+    suspend fun getChapters(workId: Int, session: Session? = null): ChapterQueryResult {
+        val response: HttpResponse = httpClient.get(base_loc + chapter_navigation(workId)) {
+            session?.let {
+                with(it) {
+                    setSessionCookies()
+                }
+            }
+        }
+        return chapterNavigationWrapper.read(response.receive())
     }
 
     fun getChaptersSince(work: Work, date: TemporalAccessor = work.dateUpdated) = getChaptersSince(work.workId, date)
@@ -148,6 +188,13 @@ class AO3Wrapper(
         httpClient.close()
     }
 
+    private fun createSearchStringForWorks(works: List<Work>): String {
+        return createIDSearchString(works.map { work -> work.workId })
+    }
+
+    private fun createIDSearchString(workIds: List<Int>): String {
+        return workIds.joinToString(" OR ") { "id:${it}" }
+    }
 }
 
 fun HttpClientConfig<*>.ao3HttpClientConfig(userAgent: String) {

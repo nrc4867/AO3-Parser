@@ -10,6 +10,8 @@ val ao3_download = { work_id: Int, extension: DownloadType -> "/downloads/$work_
 
 val ao3_autocomplete = { action: String, term: String -> "/autocomplete/$action?term=$term" }
 
+val ao3_chapter_navigation = {work_id: Int -> "/works/$work_id/navigate"}
+
 const val ao3_session_cookie = "_otwarchive_session"
 const val ao3_session_remember_user_token = "remember_user_token"
 const val ao3_session_user_conditionals = "user_credentials"
