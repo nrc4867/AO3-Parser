@@ -61,7 +61,7 @@ class SearchParser : Parser<SearchResult> {
             works.add(
                 Work(
                     workId = getResultsFound(workIDRegex, article.attr("id"), 0),
-                    lastestChapter = stats.getOrDefault("latestChapter", 0) as Int,
+                    latestChapter = stats.getOrDefault("latestChapter", 0) as Int,
                     archiveSymbols = extractRequiredTags(
                         article.getElementsByClass("required-tags")[0].getElementsByTag(
                             "span"
