@@ -4,6 +4,7 @@ import constants.*
 import exception.InvalidLoginException
 import io.ktor.client.*
 import io.ktor.client.call.*
+import io.ktor.client.engine.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.features.*
 import io.ktor.client.request.*
@@ -16,15 +17,12 @@ import model.result.AutoCompleteResult
 import model.result.SearchResult
 import model.user.Session
 import model.work.Work
-import util.Logging
-import util.logger
-import util.loginForm
-import util.setCookie
+import util.*
 import wrapper.parser.AutoCompleteParser
 import wrapper.parser.LoginPageParser
 import wrapper.parser.SearchParser
 import java.net.HttpCookie
-import java.net.URLEncoder
+import java.time.temporal.TemporalAccessor
 import java.util.*
 
 /**
@@ -39,6 +37,7 @@ import java.util.*
  * @constructor Create empty A o3wrapper
  */
 class AO3Wrapper(
+    private val httpClient: HttpClient = HttpClient { ao3HttpClientConfig("generic-ao3-wrapper") },
     private val base_loc: String = ao3_url,
     private val search_loc: String = ao3_search,
     private val login_loc: String = ao3_login,
@@ -46,26 +45,11 @@ class AO3Wrapper(
     private val work_location: (work_id: Int, chapter_id: Int) -> String = ao3_work,
 ) : Logging, Closeable {
 
-    var httpClient = HttpClient {
-        expectSuccess = false
-        followRedirects = false
-
-        install(UserAgent) {
-            agent = "generic-ao3-wrapper"
-        }
-
-        install(io.ktor.client.features.logging.Logging)
-    }
-
     var searchWrapper = Wrapper(SearchParser())
     var autoCompleteWrapper = Wrapper(AutoCompleteParser())
     var loginWrapper = Wrapper(LoginPageParser())
 
-    suspend fun search(
-        searchQuery: SearchQuery,
-        session: Session? = null,
-        page: Int = 1,
-    ): SearchResult {
+    suspend fun search(searchQuery: SearchQuery, session: Session? = null, page: Int = 1): SearchResult {
         val response: HttpResponse =
             httpClient.request(base_loc + search_loc + "page=$page&" + searchQuery.searchString()) {
                 method = HttpMethod.Get
@@ -84,13 +68,9 @@ class AO3Wrapper(
     }
 
     suspend fun suggestAutoComplete(autoCompleteField: AutoCompleteField, userTerm: String): List<AutoCompleteResult> {
-
         val response: HttpResponse =
             httpClient.request(
-                base_loc + auto_complete(
-                    autoCompleteField.search_param,
-                    URLEncoder.encode(userTerm, Charsets.UTF_8)
-                )
+                base_loc + auto_complete(autoCompleteField.search_param, userTerm.encode())
             ) {
                 method = HttpMethod.Get
             }
@@ -98,9 +78,9 @@ class AO3Wrapper(
         return autoCompleteWrapper.read(response.receive())
     }
 
-    fun getChaptersSince(work: Work, date: Date = Date(0)) = getChaptersSince(work.workId, date)
+    fun getChaptersSince(work: Work, date: TemporalAccessor = work.dateUpdated) = getChaptersSince(work.workId, date)
 
-    fun getChaptersSince(workId: Int, date: Date = Date(0)) {
+    fun getChaptersSince(workId: Int, date: TemporalAccessor) {
     }
 
     /**
@@ -154,7 +134,7 @@ class AO3Wrapper(
         return session
     }
 
-    suspend fun validateSession(session: Session) : Boolean {
+    suspend fun validateSession(session: Session): Boolean {
         val response: HttpResponse = httpClient.get(base_loc + login_loc) {
             with(session) {
                 setSessionCookies()
@@ -168,4 +148,13 @@ class AO3Wrapper(
         httpClient.close()
     }
 
+}
+
+fun HttpClientConfig<*>.ao3HttpClientConfig(userAgent: String) {
+    expectSuccess = false
+    followRedirects = false
+
+    install(UserAgent) {
+        agent = userAgent
+    }
 }
