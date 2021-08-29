@@ -1,16 +1,10 @@
 package util
 
-import java.net.HttpCookie
-import java.net.HttpURLConnection
-import java.net.URL
+import io.ktor.client.request.*
+import io.ktor.http.*
 import java.net.URLEncoder
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
-import java.security.KeyStore
-import java.security.SecureRandom
-import javax.net.ssl.HttpsURLConnection
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManagerFactory
 
 private val encodedArrayBraces = "[]".encode()
 private val check = "✓".encode()
@@ -29,27 +23,18 @@ fun loginForm(userName: String, userPassword: String, authenticity_token: String
     "authenticity_token=$authenticity_token&" +
     "$userLoginField=$userName&" +
     "$userPasswordField=$userPassword&" +
-    "$userRememberMeField=${if (rememberMe) "1" else "0"}"
+    "$userRememberMeField=${if (rememberMe) "1" else "0"}&" +
+    "commit=Log+In"
 
-fun generateHttpsConnection(keyStore: KeyStore): (URL) -> HttpsURLConnection {
-    val sslContext = SSLContext.getInstance("SSL")
-    val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-    trustManagerFactory.init(keyStore)
-    sslContext.init(null, trustManagerFactory.trustManagers, SecureRandom())
-
-    return { url: URL ->
-        val conn = url.openConnection() as HttpsURLConnection
-        conn.sslSocketFactory = sslContext.socketFactory
-        conn
+/**
+ * The default cookie method does not work for this application.
+ *  I believe that it is encoding the values before setting the cookie. AO3 requires the raw cookie value
+ */
+fun HttpRequestBuilder.setCookie(name: String, value: String) {
+    val renderedCookie = "${name}=${value};"
+    if (HttpHeaders.Cookie !in this.headers) {
+        this.headers.append(HttpHeaders.Cookie, renderedCookie)
+        return
     }
-}
-
-fun HttpURLConnection.extractSetCookie(action: (HttpCookie?) -> Unit): Unit? {
-    this.headerFields["set-cookie"]?.let {
-        it.forEach { cookie_string ->
-            val cookie: MutableList<HttpCookie>? = HttpCookie.parse(cookie_string)
-            return cookie?.forEach(action)
-        }
-    }
-    return null
+    this.headers[HttpHeaders.Cookie] += renderedCookie
 }
