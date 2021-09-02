@@ -9,6 +9,7 @@ import model.work.Tag
 import model.work.Work
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 import java.time.format.DateTimeFormatter
 
@@ -26,24 +27,26 @@ class SearchParser : Parser<SearchResult> {
         val chapterCurrentRegex: Regex = Regex("\\d+")
         val tagTypeRegex: Regex = Regex("[a-zA-Z]+")
 
-        fun getResultsFound(regex: Regex, text: String): String? = regex.find(text)?.value
+        fun getRegexFound(regex: Regex, text: String): String? = regex.find(text)?.value
 
-        fun getResultsFound(regex: Regex, text: String, default: Int): Int {
+        fun getRegexFound(regex: Regex, text: String, default: Int): Int {
             val res = regex.find(text)?.value
             return res?.toInt() ?: default
         }
 
-        fun getResultsFound(regex: Regex, text: String, default: String): String {
+        fun getRegexFound(regex: Regex, text: String, default: String): String {
             val res = regex.find(text)?.value
             return res ?: default
         }
     }
 
+    internal var resultsFoundParser = {mainBody: Element -> getRegexFound(resultsFoundRegex, mainBody.getElementsByTag("h3")[0].text(), 0)}
+
     override fun parsePage(queryResponse: String): SearchResult {
         val doc: Document = Jsoup.parse(queryResponse)
         val mainBody = doc.getElementById("main")
 
-        val resultsFound: Int = getResultsFound(resultsFoundRegex, mainBody.getElementsByTag("h3")[0].text(), 0)
+        val resultsFound: Int = resultsFoundParser(mainBody)
 
         var page = 1
         var pages = 1
@@ -64,7 +67,7 @@ class SearchParser : Parser<SearchResult> {
 
             works.add(
                 Work(
-                    workId = getResultsFound(workIDRegex, article.attr("id"), 0),
+                    workId = getRegexFound(workIDRegex, article.attr("id"), 0),
                     latestChapter = stats.getOrDefault("latestChapter", 0) as Int,
                     archiveSymbols = extractRequiredTags(
                         article.getElementsByClass("required-tags")[0].getElementsByTag(
@@ -105,8 +108,8 @@ class SearchParser : Parser<SearchResult> {
         for (index in 1 until links.size) {
             (HeaderValuesMap["authors"] as ArrayList<Creator>).add(
                 Creator(
-                    authorUserName = getResultsFound(authorUserRegex, links[index].attr("href"), ""),
-                    authorPseudoName = getResultsFound(authorPseudoRegex, links[index].attr("href"), "")
+                    authorUserName = getRegexFound(authorUserRegex, links[index].attr("href"), ""),
+                    authorPseudoName = getRegexFound(authorPseudoRegex, links[index].attr("href"), "")
                 )
             )
         }
@@ -122,7 +125,7 @@ class SearchParser : Parser<SearchResult> {
                 Tag(
                     text = link.text(),
                     tagType = TagType.tagTypeMap.getOrDefault(
-                        getResultsFound(
+                        getRegexFound(
                             tagTypeRegex,
                             if (!link.parent().tagName().equals("strong")) link.parent().attr("class")
                             else link.parent().parent().attr("class"),
@@ -164,13 +167,13 @@ class SearchParser : Parser<SearchResult> {
                 "words" -> statsMap["words"] = link.text().replace(",", "").toInt()
                 "chapters" -> {
                     statsMap["latestChapter"] =
-                        getResultsFound(chapterIDRegex,
+                        getRegexFound(chapterIDRegex,
                             if (link.getElementsByTag("a")
                                     .isNullOrEmpty()
                             ) "" else link.getElementsByTag("a")[0].attr("href"),
                             0)
-                    statsMap["chapterTotal"] = getResultsFound(chapterTotalRegex, link.text().replace(",", ""))
-                    statsMap["chapterCurrent"] = getResultsFound(chapterCurrentRegex, link.text().replace(",", ""), 0)
+                    statsMap["chapterTotal"] = getRegexFound(chapterTotalRegex, link.text().replace(",", ""))
+                    statsMap["chapterCurrent"] = getRegexFound(chapterCurrentRegex, link.text().replace(",", ""), 0)
                 }
                 "collections" -> statsMap["collections"] = link.text().replace(",", "").toInt()
                 "comments" -> statsMap["comments"] = link.text().replace(",", "").toInt()

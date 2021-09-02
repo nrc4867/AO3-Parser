@@ -36,13 +36,13 @@ class ChapterParser: Parser<ChapterQueryResult> {
     private fun readHeading(mainBody: Element): Triple<Int, String, List<Creator>> {
         val heading = mainBody.getElementsByTag("h2")[0]
         val links = heading.getElementsByTag("a")
-        val workID: Int = SearchParser.getResultsFound(SearchParser.workIDRegex, links[0].attr("href"), 0)
+        val workID: Int = SearchParser.getRegexFound(SearchParser.workIDRegex, links[0].attr("href"), 0)
         val workTitle: String = links[0].text()
 
         val creators = mutableListOf<Creator>()
         for (index in 1 until links.size) {
-            val author = SearchParser.getResultsFound(SearchParser.authorUserRegex, links[index].attr("href"))
-            val pseudo = SearchParser.getResultsFound(SearchParser.authorPseudoRegex, links[index].attr("href"))
+            val author = SearchParser.getRegexFound(SearchParser.authorUserRegex, links[index].attr("href"))
+            val pseudo = SearchParser.getRegexFound(SearchParser.authorPseudoRegex, links[index].attr("href"))
             creators.add(Creator(author.orEmpty(), pseudo.orEmpty()))
         }
 
@@ -58,9 +58,9 @@ class ChapterParser: Parser<ChapterQueryResult> {
     }
 
     private fun readChapterProperty(chapter: Element): ChapterProperty {
-        val chapterTitle = SearchParser.getResultsFound(chapterTitleRegex, chapter.allElements[1].text(), "")
-        val chapterNumber = SearchParser.getResultsFound(chapterNumberRegex, chapter.allElements[1].text(), 0)
-        val chapterId: Int = SearchParser.getResultsFound(chapterIdRegex, chapter.allElements[1].attr("href"), 0)
+        val chapterTitle = SearchParser.getRegexFound(chapterTitleRegex, chapter.allElements[1].text(), "")
+        val chapterNumber = SearchParser.getRegexFound(chapterNumberRegex, chapter.allElements[1].text(), 0)
+        val chapterId: Int = SearchParser.getRegexFound(chapterIdRegex, chapter.allElements[1].attr("href"), 0)
 
         val date = dateTimeFormatter.parse(chapter.allElements[2].text())
 
