@@ -12,14 +12,8 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.core.*
-import model.result.AutoCompleteResult
-import model.result.ChapterQueryResult
-import model.result.SearchResult
-import model.result.TagSortAndFilterResult
-import model.searchQuries.FilterWorkSearchQuery
-import model.searchQuries.TagSearchQuery
-import model.searchQuries.WorkSearchQuery
-import model.searchQuries.buildTagSearchQuery
+import model.result.*
+import model.searchQuries.*
 import model.user.Session
 import model.work.Work
 import util.*
@@ -37,7 +31,7 @@ class AO3Wrapper(
     var searchWrapper = Wrapper(SearchParser())
 
     /**
-     *
+     * parser for the filtered results
      */
     var sortAndFilterWrapper = Wrapper(SortAndFilterParser())
 
@@ -56,6 +50,16 @@ class AO3Wrapper(
      * parser for the login screen
      */
     var loginWrapper = Wrapper(LoginPageParser())
+
+    /**
+     * parser for the person search
+     */
+    var personWrapper = Wrapper(PersonParser())
+
+    /**
+     * parser for the bookmark search
+     */
+    var bookmarkParser = Wrapper(BookmarkParser())
 
     /**
      * Perform a search
@@ -78,18 +82,16 @@ class AO3Wrapper(
         return searchWrapper.read(response.receive())
     }
 
-    suspend fun bookmarkSearch() {
-    }
-
-    suspend fun tagSearch() {
-    }
-
-    suspend fun peopleSearch() {
-    }
-
-    suspend fun browseTag() {
-    }
-
+    /**
+     * perform a search on a tag filter
+     *
+     * @param tagId: the tag to filter on
+     * @param include: filters to include
+     * @param exclude: filters to exclude
+     * @param workSearchQuery: a query
+     * @param session: a session that has permission to view the works in the listed query
+     * @param page: the page of results to return
+     */
     suspend fun sortAndFilterTags(
         tagId: String,
         include: TagSearchQuery,
@@ -107,7 +109,23 @@ class AO3Wrapper(
                 }
             }
 
-        return sortAndFilterWrapper.parser.parsePage(response.receive())
+        return sortAndFilterWrapper.read(response.receive())
+    }
+
+    suspend fun searchPeople(peopleQuery: PeopleQuery, session: Session? = null, page: Int = 1): List<PersonResult> {
+        val response: HttpResponse = httpClient.get {
+            session?.let {
+                with(session) {
+                    setSessionCookies()
+                }
+            }
+        }
+
+        return personWrapper.read(response.receive())
+    }
+
+    suspend fun searchBookmarks(bookmarkQuery: BookmarkQuery, session: Session? = null, page: Int = 1) {
+
     }
 
     suspend fun sortAndFilterBookmarks() {
@@ -133,7 +151,6 @@ class AO3Wrapper(
 
     suspend fun getUserDashboard() {
     }
-
 
     /**
      * Get a list of works by supplied ID
@@ -170,12 +187,12 @@ class AO3Wrapper(
     /**
      * Get a suggested autocomplete from an ao3 feild
      *
-     * @param autoCompleteField: The type of autocomplete to return
      * @param field: the search to base the autocomplete on
+     * @param autoCompleteField: The type of autocomplete to return
      *
      * @return a list of suggested completions for field
      */
-    suspend fun suggestAutoComplete(autoCompleteField: AutoCompleteField, field: String): List<AutoCompleteResult> {
+    suspend fun suggestAutoComplete(field: String, autoCompleteField: AutoCompleteField): List<AutoCompleteResult> {
         val response: HttpResponse =
             httpClient.get(locations.auto_complete(autoCompleteField.search_param, field.encode()))
         return autoCompleteWrapper.read(response.receive())

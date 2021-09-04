@@ -10,21 +10,17 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import util.Logging
 import util.logger
-import wrapper.parser.SearchParser.Companion.getRegexFound
+import wrapper.parser.ParserRegex.digitsRegex
+import wrapper.parser.ParserRegex.endWorkRegex
+import wrapper.parser.ParserRegex.foundWorksRegex
+import wrapper.parser.ParserRegex.startWorkRegex
+import wrapper.parser.ParserRegex.tagWithoutDigitsRegex
 
 class SortAndFilterParser : Parser<TagSortAndFilterResult>, Logging {
 
-    companion object {
-        val startWorkRegex: Regex = Regex("\\d+")
-        val endWorkRegex: Regex = Regex("(?<=[-] )\\d+")
-        val foundWorksRegex: Regex = Regex("(?<=of )\\d+")
-        val digitsRegex: Regex = Regex("\\d+")
-        val tagWithoutDigitsRegex: Regex = Regex(".* ")
-    }
-
     private val searchParser: SearchParser = SearchParser().apply {
         resultsFoundParser =
-            { mainBody: Element -> getRegexFound(foundWorksRegex, mainBody.getElementsByTag("h2")[0].text(), 0) }
+            { mainBody: Element -> foundWorksRegex.getRegexFound(mainBody.getElementsByTag("h2")[0].text(), 0) }
     }
 
     override fun parsePage(queryResponse: String): TagSortAndFilterResult {
@@ -34,8 +30,8 @@ class SortAndFilterParser : Parser<TagSortAndFilterResult>, Logging {
 
         return TagSortAndFilterResult(
             searchParser.parsePage(queryResponse),
-            getRegexFound(startWorkRegex, mainBody.getElementsByTag("h2")[0].text(), 0),
-            getRegexFound(endWorkRegex, mainBody.getElementsByTag("h2")[0].text(), 0),
+            startWorkRegex.getRegexFound(mainBody.getElementsByTag("h2")[0].text(), 0),
+            endWorkRegex.getRegexFound(mainBody.getElementsByTag("h2")[0].text(), 0),
             parseRatingCount(mainBody.getElementById("include_rating_tags")),
             parseWarningCount(mainBody.getElementById("include_archive_warning_tags")),
             parseCategoryCount(mainBody.getElementById("include_category_tags")),
@@ -54,12 +50,12 @@ class SortAndFilterParser : Parser<TagSortAndFilterResult>, Logging {
         var explicit = 0
 
         ratings.getElementsByTag("li").forEach {
-            when(getRegexFound(tagWithoutDigitsRegex, it.text(), "").trim()) {
-                "General Audiences" -> teenAndUp = getRegexFound(digitsRegex, it.text(), 0)
-                "Teen And Up Audiences" -> generalAudiences = getRegexFound(digitsRegex, it.text(), 0)
-                "Not Rated" -> notRated = getRegexFound(digitsRegex, it.text(), 0)
-                "Mature" -> mature = getRegexFound(digitsRegex, it.text(), 0)
-                "Rape/Non-Con" -> explicit = getRegexFound(digitsRegex, it.text(), 0)
+            when (tagWithoutDigitsRegex.getRegexFound(it.text(), "").trim()) {
+                "General Audiences" -> teenAndUp = digitsRegex.getRegexFound(it.text(), 0)
+                "Teen And Up Audiences" -> generalAudiences = digitsRegex.getRegexFound(it.text(), 0)
+                "Not Rated" -> notRated = digitsRegex.getRegexFound(it.text(), 0)
+                "Mature" -> mature = digitsRegex.getRegexFound(it.text(), 0)
+                "Rape/Non-Con" -> explicit = digitsRegex.getRegexFound(it.text(), 0)
                 else -> logger().warn("missing rating condition ${it.text()}")
             }
         }
@@ -76,19 +72,27 @@ class SortAndFilterParser : Parser<TagSortAndFilterResult>, Logging {
         var nonCon = 0
 
         warnings.getElementsByTag("li").forEach {
-            when(getRegexFound(tagWithoutDigitsRegex, it.text(), "").trim()) {
-                "No Archive Warnings Apply" -> noArchiveWarnings = getRegexFound(digitsRegex, it.text(), 0)
-                "Creator Chose Not To Use Archive Warnings" -> creatorChoseNoWarnings = getRegexFound(digitsRegex, it.text(), 0)
-                "Graphic Depictions Of Violence" -> graphicViolence = getRegexFound(digitsRegex, it.text(), 0)
-                "Major Character Death" -> characterDeath = getRegexFound(digitsRegex, it.text(), 0)
-                "Explicit" -> underage = getRegexFound(digitsRegex, it.text(), 0)
-                "Underage" -> nonCon = getRegexFound(digitsRegex, it.text(), 0)
-                "Rape/Non-Con" -> nonCon = getRegexFound(digitsRegex, it.text(), 0)
+            when (tagWithoutDigitsRegex.getRegexFound(it.text(), "").trim()) {
+                "No Archive Warnings Apply" -> noArchiveWarnings = digitsRegex.getRegexFound(it.text(), 0)
+                "Creator Chose Not To Use Archive Warnings" -> creatorChoseNoWarnings =
+                    digitsRegex.getRegexFound(it.text(), 0)
+                "Graphic Depictions Of Violence" -> graphicViolence = digitsRegex.getRegexFound(it.text(), 0)
+                "Major Character Death" -> characterDeath = digitsRegex.getRegexFound(it.text(), 0)
+                "Explicit" -> underage = digitsRegex.getRegexFound(it.text(), 0)
+                "Underage" -> nonCon = digitsRegex.getRegexFound(it.text(), 0)
+                "Rape/Non-Con" -> nonCon = digitsRegex.getRegexFound(it.text(), 0)
                 else -> logger().warn("missing warning condition ${it.text()}")
             }
         }
 
-        return WarningCount(noArchiveWarnings, creatorChoseNoWarnings, graphicViolence, characterDeath, underage, nonCon)
+        return WarningCount(
+            noArchiveWarnings,
+            creatorChoseNoWarnings,
+            graphicViolence,
+            characterDeath,
+            underage,
+            nonCon
+        )
     }
 
     private fun parseCategoryCount(categories: Element): CategoryCount {
@@ -100,13 +104,13 @@ class SortAndFilterParser : Parser<TagSortAndFilterResult>, Logging {
         var other = 0
 
         categories.getElementsByTag("li").forEach {
-            when(getRegexFound(tagWithoutDigitsRegex, it.text(), "").trim()) {
-                "F/M" -> femaleMale = getRegexFound(digitsRegex, it.text(), 0)
-                "Gen" -> gen = getRegexFound(digitsRegex, it.text(), 0)
-                "F/F" -> femaleFemale = getRegexFound(digitsRegex, it.text(), 0)
-                "M/M" -> maleMale = getRegexFound(digitsRegex, it.text(), 0)
-                "Multi" -> multi = getRegexFound(digitsRegex, it.text(), 0)
-                "Other" -> other = getRegexFound(digitsRegex, it.text(), 0)
+            when (tagWithoutDigitsRegex.getRegexFound(it.text(), "").trim()) {
+                "F/M" -> femaleMale = digitsRegex.getRegexFound(it.text(), 0)
+                "Gen" -> gen = digitsRegex.getRegexFound(it.text(), 0)
+                "F/F" -> femaleFemale = digitsRegex.getRegexFound(it.text(), 0)
+                "M/M" -> maleMale = digitsRegex.getRegexFound(it.text(), 0)
+                "Multi" -> multi = digitsRegex.getRegexFound(it.text(), 0)
+                "Other" -> other = digitsRegex.getRegexFound(it.text(), 0)
                 else -> logger().warn("missing category condition ${it.text()}")
             }
         }
@@ -118,9 +122,9 @@ class SortAndFilterParser : Parser<TagSortAndFilterResult>, Logging {
         val recommendations = mutableListOf<RecommendedTag>()
 
         recommendedCategory.getElementsByTag("li").forEach {
-            val name = getRegexFound(tagWithoutDigitsRegex, it.text(), "").trim()
-            val count = getRegexFound(digitsRegex, it.text(), 0)
-            val id = getRegexFound(digitsRegex, it.getElementsByTag("label")[0].attr("for"), 0)
+            val name = tagWithoutDigitsRegex.getRegexFound(it.text(), "").trim()
+            val count = digitsRegex.getRegexFound(it.text(), 0)
+            val id = digitsRegex.getRegexFound(it.getElementsByTag("label")[0].attr("for"), 0)
             recommendations.add(RecommendedTag(name, count, id))
         }
 

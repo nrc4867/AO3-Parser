@@ -11,36 +11,20 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
-import java.time.format.DateTimeFormatter
+import wrapper.parser.DateTimeFormats.ddMMMYYYY
+import wrapper.parser.ParserRegex.authorPseudoRegex
+import wrapper.parser.ParserRegex.authorUserRegex
+import wrapper.parser.ParserRegex.chapterCurrentRegex
+import wrapper.parser.ParserRegex.chapterIDRegex
+import wrapper.parser.ParserRegex.chapterTotalRegex
+import wrapper.parser.ParserRegex.resultsFoundRegex
+import wrapper.parser.ParserRegex.tagTypeRegex
+import wrapper.parser.ParserRegex.workIDRegex
 
 class SearchParser : Parser<SearchResult> {
 
-    companion object {
-        val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd MMM YYYY")
-
-        val resultsFoundRegex: Regex = Regex("\\d+")
-        val workIDRegex: Regex = Regex("\\d+")
-        val authorUserRegex: Regex = Regex("(?<=/users/)[a-zA-Z]+")
-        val authorPseudoRegex: Regex = Regex("(?<=pseuds[/])(.*)")
-        val chapterIDRegex: Regex = Regex("(?<=chapters[/])(.*)")
-        val chapterTotalRegex: Regex = Regex("(?<=\\d[/])(.*)")
-        val chapterCurrentRegex: Regex = Regex("\\d+")
-        val tagTypeRegex: Regex = Regex("[a-zA-Z]+")
-
-        fun getRegexFound(regex: Regex, text: String): String? = regex.find(text)?.value
-
-        fun getRegexFound(regex: Regex, text: String, default: Int): Int {
-            val res = regex.find(text)?.value
-            return res?.toInt() ?: default
-        }
-
-        fun getRegexFound(regex: Regex, text: String, default: String): String {
-            val res = regex.find(text)?.value
-            return res ?: default
-        }
-    }
-
-    internal var resultsFoundParser = {mainBody: Element -> getRegexFound(resultsFoundRegex, mainBody.getElementsByTag("h3")[0].text(), 0)}
+    internal var resultsFoundParser =
+        { mainBody: Element -> resultsFoundRegex.getRegexFound(mainBody.getElementsByTag("h3")[0].text(), 0) }
 
     override fun parsePage(queryResponse: String): SearchResult {
         val doc: Document = Jsoup.parse(queryResponse)
@@ -67,7 +51,7 @@ class SearchParser : Parser<SearchResult> {
 
             works.add(
                 Work(
-                    workId = getRegexFound(workIDRegex, article.attr("id"), 0),
+                    workId = workIDRegex.getRegexFound(article.attr("id"), 0),
                     latestChapter = stats.getOrDefault("latestChapter", 0) as Int,
                     archiveSymbols = extractRequiredTags(
                         article.getElementsByClass("required-tags")[0].getElementsByTag(
@@ -86,7 +70,7 @@ class SearchParser : Parser<SearchResult> {
                             ?.equals("?") == true
                     ) null else stats["chapterTotal"]?.toString()?.toInt(),
                     word_count = stats.getOrDefault("words", 0) as Int,
-                    dateUpdated = dateTimeFormatter.parse(article.getElementsByClass("dateTime")[0].text()),
+                    dateUpdated = ddMMMYYYY.parse(article.getElementsByClass("dateTime")[0].text()),
                     language = stats.getOrDefault("language", Language.UNKNOWN) as Language,
                     comments = stats.getOrDefault("comments", 0) as Int,
                     kudos = stats.getOrDefault("kudos", 0) as Int,
@@ -108,8 +92,8 @@ class SearchParser : Parser<SearchResult> {
         for (index in 1 until links.size) {
             (HeaderValuesMap["authors"] as ArrayList<Creator>).add(
                 Creator(
-                    authorUserName = getRegexFound(authorUserRegex, links[index].attr("href"), ""),
-                    authorPseudoName = getRegexFound(authorPseudoRegex, links[index].attr("href"), "")
+                    authorUserName = authorUserRegex.getRegexFound(links[index].attr("href"), ""),
+                    authorPseudoName = authorPseudoRegex.getRegexFound(links[index].attr("href"), "")
                 )
             )
         }
@@ -125,8 +109,7 @@ class SearchParser : Parser<SearchResult> {
                 Tag(
                     text = link.text(),
                     tagType = TagType.tagTypeMap.getOrDefault(
-                        getRegexFound(
-                            tagTypeRegex,
+                        tagTypeRegex.getRegexFound(
                             if (!link.parent().tagName().equals("strong")) link.parent().attr("class")
                             else link.parent().parent().attr("class"),
                             ""
@@ -167,13 +150,14 @@ class SearchParser : Parser<SearchResult> {
                 "words" -> statsMap["words"] = link.text().replace(",", "").toInt()
                 "chapters" -> {
                     statsMap["latestChapter"] =
-                        getRegexFound(chapterIDRegex,
+                        chapterIDRegex.getRegexFound(
                             if (link.getElementsByTag("a")
                                     .isNullOrEmpty()
                             ) "" else link.getElementsByTag("a")[0].attr("href"),
-                            0)
-                    statsMap["chapterTotal"] = getRegexFound(chapterTotalRegex, link.text().replace(",", ""))
-                    statsMap["chapterCurrent"] = getRegexFound(chapterCurrentRegex, link.text().replace(",", ""), 0)
+                            0
+                        )
+                    statsMap["chapterTotal"] = chapterTotalRegex.getRegexFound(link.text().replace(",", ""))
+                    statsMap["chapterCurrent"] = chapterCurrentRegex.getRegexFound(link.text().replace(",", ""), 0)
                 }
                 "collections" -> statsMap["collections"] = link.text().replace(",", "").toInt()
                 "comments" -> statsMap["comments"] = link.text().replace(",", "").toInt()

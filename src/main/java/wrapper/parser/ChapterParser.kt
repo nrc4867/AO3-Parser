@@ -6,18 +6,15 @@ import model.work.Creator
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import java.time.format.DateTimeFormatter
+import wrapper.parser.DateTimeFormats.YYYYMMdd
+import wrapper.parser.ParserRegex.authorPseudoRegex
+import wrapper.parser.ParserRegex.authorUserRegex
+import wrapper.parser.ParserRegex.chapterIdRegex
+import wrapper.parser.ParserRegex.chapterNumberRegex
+import wrapper.parser.ParserRegex.chapterTitleRegex
+import wrapper.parser.ParserRegex.workIDRegex
 
 class ChapterParser: Parser<ChapterQueryResult> {
-
-    companion object {
-        val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("(YYYY-MM-dd)")
-
-        val chapterIdRegex: Regex = Regex("(?<=/chapters/)[\\d]+")
-        val chapterNumberRegex: Regex = Regex("\\d+")
-        val chapterTitleRegex: Regex = Regex("(?<=[.] )(.*)")
-
-    }
 
     override fun parsePage(queryResponse: String): ChapterQueryResult {
         val doc: Document = Jsoup.parse(queryResponse)
@@ -36,13 +33,13 @@ class ChapterParser: Parser<ChapterQueryResult> {
     private fun readHeading(mainBody: Element): Triple<Int, String, List<Creator>> {
         val heading = mainBody.getElementsByTag("h2")[0]
         val links = heading.getElementsByTag("a")
-        val workID: Int = SearchParser.getRegexFound(SearchParser.workIDRegex, links[0].attr("href"), 0)
+        val workID: Int = workIDRegex.getRegexFound(links[0].attr("href"), 0)
         val workTitle: String = links[0].text()
 
         val creators = mutableListOf<Creator>()
         for (index in 1 until links.size) {
-            val author = SearchParser.getRegexFound(SearchParser.authorUserRegex, links[index].attr("href"))
-            val pseudo = SearchParser.getRegexFound(SearchParser.authorPseudoRegex, links[index].attr("href"))
+            val author = authorUserRegex.getRegexFound(links[index].attr("href"))
+            val pseudo = authorPseudoRegex.getRegexFound(links[index].attr("href"))
             creators.add(Creator(author.orEmpty(), pseudo.orEmpty()))
         }
 
@@ -58,11 +55,11 @@ class ChapterParser: Parser<ChapterQueryResult> {
     }
 
     private fun readChapterProperty(chapter: Element): ChapterProperty {
-        val chapterTitle = SearchParser.getRegexFound(chapterTitleRegex, chapter.allElements[1].text(), "")
-        val chapterNumber = SearchParser.getRegexFound(chapterNumberRegex, chapter.allElements[1].text(), 0)
-        val chapterId: Int = SearchParser.getRegexFound(chapterIdRegex, chapter.allElements[1].attr("href"), 0)
+        val chapterTitle = chapterTitleRegex.getRegexFound(chapter.allElements[1].text(), "")
+        val chapterNumber = chapterNumberRegex.getRegexFound(chapter.allElements[1].text(), 0)
+        val chapterId: Int = chapterIdRegex.getRegexFound(chapter.allElements[1].attr("href"), 0)
 
-        val date = dateTimeFormatter.parse(chapter.allElements[2].text())
+        val date = YYYYMMdd.parse(chapter.allElements[2].text())
 
         return ChapterProperty(chapterNumber, chapterTitle, chapterId, date)
     }
