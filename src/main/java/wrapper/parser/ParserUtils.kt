@@ -9,7 +9,7 @@ internal object ParserRegex {
     val workIDRegex: Regex by lazy { digitsRegex }
     val authorUserRegex: Regex by lazy { Regex("(?<=/users/)[a-zA-Z]+") }
     val authorPseudoRegex: Regex by lazy { Regex("(?<=pseuds[/])(.*)") }
-    val chapterIDRegex: Regex by lazy { Regex("(?<=chapters[/])(.*)") }
+    val chapterRegex: Regex by lazy { Regex("(?<=chapters[/])(.*)") }
     val chapterTotalRegex: Regex by lazy { Regex("(?<=\\d[/])(.*)") }
     val chapterCurrentRegex: Regex by lazy { Regex("\\d+") }
     val tagTypeRegex: Regex by lazy { Regex("[a-zA-Z]+") }
@@ -26,8 +26,8 @@ internal object ParserRegex {
 }
 
 internal object DateTimeFormats {
-    val ddMMMYYYY: DateTimeFormatter = DateTimeFormatter.ofPattern("dd MMM YYYY")
-    val YYYYMMdd: DateTimeFormatter = DateTimeFormatter.ofPattern("(YYYY-MM-dd)")
+    val ddMMMYYYY: DateTimeFormatter by lazy { DateTimeFormatter.ofPattern("dd MMM YYYY") }
+    val YYYYMMdd: DateTimeFormatter by lazy { DateTimeFormatter.ofPattern("(YYYY-MM-dd)") }
 }
 
 internal fun Regex.getRegexFound(text: String): String? = this.find(text)?.value
