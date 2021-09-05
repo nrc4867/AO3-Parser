@@ -1,6 +1,7 @@
 package wrapper.parser
 
 import constants.work_properties.BookmarkType
+import constants.work_properties.parseBookmarkType
 import model.result.BookmarkResult
 import model.result.BookmarkSearchResult
 import model.result.BookmarkUserSection
@@ -11,15 +12,15 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 import wrapper.parser.DateTimeFormats.ddMMMYYYY
-import wrapper.parser.ParserRegex.authorPseudoRegex
 import wrapper.parser.ParserRegex.authorUserRegex
+import wrapper.parser.ParserRegex.bookmarkerPseudo
 import wrapper.parser.ParserRegex.digitsRegex
 
 class BookmarkParser : Parser<BookmarkSearchResult> {
 
     override fun parsePage(queryResponse: String): BookmarkSearchResult {
         val doc: Document = Jsoup.parse(queryResponse)
-        val mainBody = doc.getElementById("doc")
+        val mainBody = doc.getElementById("main")
 
         val bookmarkResults = getBookmarks(mainBody.getElementsByAttributeValue("role", "article"))
 
@@ -46,13 +47,17 @@ class BookmarkParser : Parser<BookmarkSearchResult> {
     }
 
     private fun parseWork(article: Element): Work? {
-        return null
+        if (article.getElementsByClass("message").isNotEmpty()) {
+            return null
+        }
+
+        return extractWork(article)
     }
 
     private fun parseBookmarkSymbol(article: Element): BookmarkType? {
         val status = article.getElementsByClass("status").getOrNull(0)
         if (status != null)
-            return BookmarkType.valueOf(
+            return parseBookmarkType(
                 status
                     .getElementsByClass("symbol")[0]
                     .getElementsByTag("span")[0]
@@ -63,13 +68,16 @@ class BookmarkParser : Parser<BookmarkSearchResult> {
 
 
     private fun parseUserSection(article: Element): BookmarkUserSection {
-        val userSection = article.getElementById("user")
+        val userSection = article.getElementsByClass("user")[0]
         val creator = userSection.getElementsByClass("byline")[0].getElementsByTag("a")[0].attr("href")
+        var bookmarkerTags: List<String>? = null
+        userSection.getElementsByClass("meta").getOrNull(1)?.let { listItem ->
+            bookmarkerTags = listItem.getElementsByTag("li").map { element ->  element.text() }
+        }
         return BookmarkUserSection(
-            creator = Creator(authorUserRegex.getRegexFound(creator, ""), authorPseudoRegex.getRegexFound(creator, "")),
+            creator = Creator(authorUserRegex.getRegexFound(creator, ""), bookmarkerPseudo.getRegexFound(creator, "")),
             notes = userSection.getElementsByClass("notes")?.text().orEmpty(),
-            bookmarkerTags = userSection.getElementsByClass("meta")[1].getElementsByTag("li")
-                .map { element -> element.text() },
+            bookmarkerTags = bookmarkerTags.orEmpty(),
             bookmarkDate = ddMMMYYYY.parse(userSection.getElementsByClass("datetime").text())
         )
     }
@@ -81,9 +89,10 @@ class BookmarkParser : Parser<BookmarkSearchResult> {
     private fun getPages(pagination: Element?): Pair<Int, Int> {
         if (pagination == null)
             return Pair(1, 1)
+        val paginationLinks =  pagination.getElementsByTag("a")
         return Pair(
             pagination.getElementsByClass("current")[0].text().toInt(),
-            pagination.getElementsByTag("a")[pagination.childrenSize() - 2].text().toInt()
+            paginationLinks[paginationLinks.size - 2].text().toInt()
         )
     }
 }

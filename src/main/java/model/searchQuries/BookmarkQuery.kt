@@ -14,8 +14,8 @@ data class BookmarkQuery(
     val bookmarkQuery: String? = null,
     val bookmarkerTags: List<String>? = null,
     val bookmarkerNotes: String? = null,
-    val recommendation: SearchBoolean? = null,
-    val withNotes: SearchBoolean? = null,
+    val recommendation: SearchBoolean = SearchBoolean.FALSE,
+    val withNotes: SearchBoolean = SearchBoolean.FALSE,
     val date: String? = null,
     val sortColumn: BookmarkSortColumn? = null
 ) : SearchQuery() {
@@ -30,8 +30,8 @@ data class BookmarkQuery(
             bookmarkQuery?.let { appendParameter(header, BOOKMARK_QUERY, it) }
             bookmarkerTags?.let { appendParameter(header, OTHER_BOOKMARK_TAG_NAMES, it.joinToString(",")) }
             bookmarkerNotes?.let { appendParameter(header, BOOKMARKER, it) }
-            recommendation?.let { appendParameter(header, REC, it.search_param.toString()) }
-            withNotes?.let { appendParameter(header, WITH_NOTES, it.search_param.toString()) }
+            appendParameter(header, REC, recommendation.search_param.toString())
+            appendParameter(header, WITH_NOTES, withNotes.search_param.toString())
             date?.let { appendParameter(header, DATE, it) }
             sortColumn?.let { appendParameter(header, COLUMN, it.search_param) }
         }
@@ -39,6 +39,10 @@ data class BookmarkQuery(
 
 }
 
-fun bookmarkSearch(bookmarkQuery: BookmarkQuery) = bookmarkQuery.bookmarkQuery(StringBuilder())
+fun bookmarkSearch(bookmarkQuery: BookmarkQuery): String {
+    val stringBuilder = StringBuilder()
+    bookmarkQuery.bookmarkQuery(stringBuilder)
+    return stringBuilder.toString()
+}
 
 

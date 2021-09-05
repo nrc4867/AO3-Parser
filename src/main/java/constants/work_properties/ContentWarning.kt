@@ -7,7 +7,7 @@ enum class ContentWarning(val search_param: Int, val class_name: String) {
     NO_ARCHIVE_WARNINGS(16, "warning-no"),
     NON_CON(19, ""),
     UNDERAGE(20, ""),
-    EXTERNAL_WORK(0, "warning-external-work"), // todo find real search id
+    EXTERNAL_WORK(0, "external-work"),
 
     /**
      * There arent specific archive symbols for all the warnings, I use this as a catch all

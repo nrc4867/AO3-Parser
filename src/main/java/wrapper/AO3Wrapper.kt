@@ -124,8 +124,20 @@ class AO3Wrapper(
         return personWrapper.read(response.receive())
     }
 
-    suspend fun searchBookmarks(bookmarkQuery: BookmarkQuery, session: Session? = null, page: Int = 1) {
+    suspend fun searchBookmarks(
+        bookmarkQuery: BookmarkQuery,
+        session: Session? = null,
+        page: Int = 1
+    ): BookmarkSearchResult {
+        val response: HttpResponse = httpClient.get(locations.bookmark_location(bookmarkSearch(bookmarkQuery), page)) {
+            session?.let {
+                with(session) {
+                    setSessionCookies()
+                }
+            }
+        }
 
+        return bookmarkParser.read(response.receive())
     }
 
     suspend fun sortAndFilterBookmarks() {

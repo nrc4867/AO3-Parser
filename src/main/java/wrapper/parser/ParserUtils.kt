@@ -23,6 +23,7 @@ internal object ParserRegex {
     val foundWorksRegex: Regex by lazy { Regex("(?<=of )\\d+") }
 
     val tagWithoutDigitsRegex: Regex by lazy { Regex(".* ") }
+    val bookmarkerPseudo: Regex by lazy { Regex("(?<=pseuds[/])[a-zA-Z]+") }
 }
 
 internal object DateTimeFormats {
