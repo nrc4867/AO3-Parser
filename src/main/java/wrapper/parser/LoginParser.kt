@@ -1,6 +1,6 @@
 package wrapper.parser
 
-import exception.NoCSRFTokenException
+import exception.loginexception.NoCSRFTokenException
 import org.jsoup.Jsoup
 
 /**

@@ -1,12 +1,12 @@
 package wrapper.parser
 
-import constants.work_properties.BookmarkType
-import constants.work_properties.parseBookmarkType
-import model.result.BookmarkResult
-import model.result.BookmarkSearchResult
-import model.result.BookmarkUserSection
-import model.work.Creator
-import model.work.Work
+import constants.workproperties.BookmarkType
+import constants.workproperties.parseBookmarkType
+import model.result.bookmark.BookmarkResult
+import model.result.bookmark.BookmarkSearchResult
+import model.result.bookmark.BookmarkUserSection
+import model.result.work.Creator
+import model.result.work.Work
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element

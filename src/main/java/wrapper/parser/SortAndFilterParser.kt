@@ -1,22 +1,19 @@
 package wrapper.parser
 
-import model.result.TagSortAndFilterResult
-import model.result.filterSidebar.CategoryCount
-import model.result.filterSidebar.RatingCount
-import model.result.filterSidebar.RecommendedTag
-import model.result.filterSidebar.WarningCount
+import model.result.filterSidebar.*
+import mu.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import util.Logging
-import util.logger
 import wrapper.parser.ParserRegex.digitsRegex
 import wrapper.parser.ParserRegex.endWorkRegex
 import wrapper.parser.ParserRegex.foundWorksRegex
 import wrapper.parser.ParserRegex.startWorkRegex
 import wrapper.parser.ParserRegex.tagWithoutDigitsRegex
 
-class SortAndFilterParser : Parser<TagSortAndFilterResult>, Logging {
+class SortAndFilterParser : Parser<TagSortAndFilterResult> {
+
+    private val logger = KotlinLogging.logger {  }
 
     private val searchParser: SearchParser = SearchParser().apply {
         resultsFoundParser =
@@ -56,7 +53,7 @@ class SortAndFilterParser : Parser<TagSortAndFilterResult>, Logging {
                 "Not Rated" -> notRated = digitsRegex.getRegexFound(it.text(), 0)
                 "Mature" -> mature = digitsRegex.getRegexFound(it.text(), 0)
                 "Rape/Non-Con" -> explicit = digitsRegex.getRegexFound(it.text(), 0)
-                else -> logger().warn("missing rating condition ${it.text()}")
+                else -> logger.warn("missing rating condition ${it.text()}")
             }
         }
 
@@ -81,7 +78,7 @@ class SortAndFilterParser : Parser<TagSortAndFilterResult>, Logging {
                 "Explicit" -> underage = digitsRegex.getRegexFound(it.text(), 0)
                 "Underage" -> nonCon = digitsRegex.getRegexFound(it.text(), 0)
                 "Rape/Non-Con" -> nonCon = digitsRegex.getRegexFound(it.text(), 0)
-                else -> logger().warn("missing warning condition ${it.text()}")
+                else -> logger.warn("missing warning condition ${it.text()}")
             }
         }
 
@@ -111,7 +108,7 @@ class SortAndFilterParser : Parser<TagSortAndFilterResult>, Logging {
                 "M/M" -> maleMale = digitsRegex.getRegexFound(it.text(), 0)
                 "Multi" -> multi = digitsRegex.getRegexFound(it.text(), 0)
                 "Other" -> other = digitsRegex.getRegexFound(it.text(), 0)
-                else -> logger().warn("missing category condition ${it.text()}")
+                else -> logger.warn("missing category condition ${it.text()}")
             }
         }
 

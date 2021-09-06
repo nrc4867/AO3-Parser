@@ -1,6 +1,6 @@
 package model.result
 
-import model.work.Work
+import model.result.work.Work
 
 data class SearchResult(val found: Int,
                         val pages: Int,

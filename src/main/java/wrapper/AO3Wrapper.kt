@@ -1,10 +1,13 @@
 package wrapper
 
 import constants.AutoCompleteField
+import constants.ao3_chapter
 import constants.ao3_session_cookie
-import constants.work_properties.SortColumn
-import constants.work_properties.SortDirection
-import exception.InvalidLoginException
+import constants.workproperties.SortColumn
+import constants.workproperties.SortDirection
+import exception.loginexception.InvalidLoginException
+import exception.queryexception.ChapterDoesNotExistException
+import exception.queryexception.WorkDoesNotExistException
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.features.*
@@ -12,54 +15,70 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.core.*
-import model.result.*
-import model.searchQuries.*
-import model.user.Session
-import model.work.Work
-import util.*
+import model.Session
+import model.result.AutoCompleteResult
+import model.result.PersonResult
+import model.result.SearchResult
+import model.result.bookmark.BookmarkSearchResult
+import model.result.chapter.ChapterNavigationResult
+import model.result.chapter.ChapterResult
+import model.result.chapter.FullChapterInfo
+import model.result.filterSidebar.TagSortAndFilterResult
+import model.result.work.Work
+import model.searchqueries.*
+import mu.KotlinLogging
+import util.encode
+import util.loginForm
+import util.setCookie
 import wrapper.parser.*
 import java.net.HttpCookie
 
 class AO3Wrapper(
     private val httpClient: HttpClient = HttpClient { ao3HttpClientConfig("generic-ao3-wrapper") },
     private val locations: LinkLocations = LinkLocations()
-) : Logging, Closeable {
+) : Closeable {
+
+    private val logger = KotlinLogging.logger {  }
 
     /**
      * parser for the search results
      */
-    var searchWrapper = Wrapper(SearchParser())
+    var searchParser = SearchParser()
 
     /**
      * parser for the filtered results
      */
-    var sortAndFilterWrapper = Wrapper(SortAndFilterParser())
-
+    var sortAndFilterParser = SortAndFilterParser()
 
     /**
      * parser for work chapter navigator
      */
-    var chapterNavigationWrapper = Wrapper(ChapterParser())
+    var chapterNavigationParser = ChapterNavigationParser()
 
     /**
      * parser for the auto complete results
      */
-    var autoCompleteWrapper = Wrapper(AutoCompleteParser())
+    var autoCompleteParser = AutoCompleteParser()
 
     /**
      * parser for the login screen
      */
-    var loginWrapper = Wrapper(LoginPageParser())
+    var loginParser = LoginPageParser()
 
     /**
      * parser for the person search
      */
-    var personWrapper = Wrapper(PersonParser())
+    var personWrapper = PersonParser()
 
     /**
      * parser for the bookmark search
      */
-    var bookmarkParser = Wrapper(BookmarkParser())
+    var bookmarkParser = BookmarkParser()
+
+    /**
+     * Parser for chapter query
+     */
+    var chapterParser = ChapterParser()
 
     /**
      * Perform a search
@@ -70,16 +89,8 @@ class AO3Wrapper(
      */
     suspend fun search(workSearchQuery: WorkSearchQuery, session: Session? = null, page: Int = 1): SearchResult {
         val response: HttpResponse =
-            httpClient.request(locations.search_loc(workSearchQuery.workSearchString(), page)) {
-                method = HttpMethod.Get
-                session?.let {
-                    with(it) {
-                        setSessionCookies()
-                    }
-                }
-            }
-
-        return searchWrapper.read(response.receive())
+            httpClient.getWithSession(locations.search_loc(workSearchQuery.workSearchString(), page), session)
+        return searchParser.parsePage(response.receive())
     }
 
     /**
@@ -101,27 +112,22 @@ class AO3Wrapper(
         page: Int = 1
     ): TagSortAndFilterResult {
         val response: HttpResponse =
-            httpClient.get(locations.filter_loc(buildTagSearchQuery(tagId, include, exclude, workSearchQuery), page)) {
-                session?.let {
-                    with(session) {
-                        setSessionCookies()
-                    }
-                }
-            }
-
-        return sortAndFilterWrapper.read(response.receive())
+            httpClient.getWithSession(
+                locations.filter_loc(
+                    buildTagSearchQuery(
+                        tagId,
+                        include,
+                        exclude,
+                        workSearchQuery
+                    ), page
+                ), session
+            )
+        return sortAndFilterParser.parsePage(response.receive())
     }
 
     suspend fun searchPeople(peopleQuery: PeopleQuery, session: Session? = null, page: Int = 1): List<PersonResult> {
-        val response: HttpResponse = httpClient.get {
-            session?.let {
-                with(session) {
-                    setSessionCookies()
-                }
-            }
-        }
-
-        return personWrapper.read(response.receive())
+        val response: HttpResponse = httpClient.getWithSession("", session)
+        return personWrapper.parsePage(response.receive())
     }
 
     suspend fun searchBookmarks(
@@ -129,15 +135,9 @@ class AO3Wrapper(
         session: Session? = null,
         page: Int = 1
     ): BookmarkSearchResult {
-        val response: HttpResponse = httpClient.get(locations.bookmark_location(bookmarkSearch(bookmarkQuery), page)) {
-            session?.let {
-                with(session) {
-                    setSessionCookies()
-                }
-            }
-        }
-
-        return bookmarkParser.read(response.receive())
+        val response: HttpResponse =
+            httpClient.getWithSession(locations.bookmark_location(bookmarkSearch(bookmarkQuery), page), session)
+        return bookmarkParser.parsePage(response.receive())
     }
 
     suspend fun sortAndFilterBookmarks() {
@@ -207,7 +207,7 @@ class AO3Wrapper(
     suspend fun suggestAutoComplete(field: String, autoCompleteField: AutoCompleteField): List<AutoCompleteResult> {
         val response: HttpResponse =
             httpClient.get(locations.auto_complete(autoCompleteField.search_param, field.encode()))
-        return autoCompleteWrapper.read(response.receive())
+        return autoCompleteParser.parsePage(response.receive())
     }
 
     /**
@@ -218,7 +218,7 @@ class AO3Wrapper(
      *
      * @return ChapterQueryResult containing the requested information
      */
-    suspend fun getChapters(work: Work, session: Session? = null): ChapterQueryResult {
+    suspend fun getChapters(work: Work, session: Session? = null): ChapterNavigationResult<FullChapterInfo> {
         return getChapters(work.workId, session)
     }
 
@@ -226,16 +226,37 @@ class AO3Wrapper(
      * Get chapters by the WorkId
      * @see getChapters
      */
-    suspend fun getChapters(workId: Int, session: Session? = null): ChapterQueryResult {
-        val response: HttpResponse = httpClient.get(locations.chapter_navigation(workId)) {
-            session?.let {
-                with(it) {
-                    setSessionCookies()
-                }
-            }
-        }
-        return chapterNavigationWrapper.read(response.receive())
+    suspend fun getChapters(workId: Int, session: Session? = null): ChapterNavigationResult<FullChapterInfo> {
+        val response: HttpResponse = httpClient.getWithSession(locations.chapter_navigation(workId), session)
+        if (response.status != HttpStatusCode.OK)
+            throw WorkDoesNotExistException(workId)
+        return chapterNavigationParser.parsePage(response.receive())
     }
+
+    suspend fun getChapter(chapterId: Int, session: Session? = null): ChapterResult {
+        val response: HttpResponse = httpClient.getWithSession(ao3_chapter(chapterId), session)
+        if (response.status != HttpStatusCode.OK)
+            throw ChapterDoesNotExistException(chapterId)
+        return chapterParser.parsePage(response.receive())
+    }
+
+    /**
+     * Get the first chapter from a work without needing to know knowing the chapter ID,
+     * If the chapterID of the first chapter is known then you should use getChapter(Int, Session) instead
+     *
+     * @param workId: Work to query
+     * @param session: A session which has permission to view this work
+     */
+    suspend fun getFirstChapter(workId: Int, session: Session? = null): ChapterResult {
+        val chapterLocation: Int =
+            httpClient.getWithSession(
+                locations.first_chapter_location(workId),
+                session
+            ).headers[HttpHeaders.Location]?.substringAfterLast('/')?.toInt()
+                ?: throw WorkDoesNotExistException(workId)
+        return getChapter(chapterLocation, session)
+    }
+
 
     /**
      * Login - Create a Session for AO3
@@ -254,7 +275,7 @@ class AO3Wrapper(
          */
         val response: HttpResponse = httpClient.get(locations.login_loc)
 
-        val authToken: String = loginWrapper.read(response.receive())
+        val authToken: String = loginParser.parsePage(response.receive())
 
         val cookies: MutableMap<String, HttpCookie> = mutableMapOf()
         response.headers.getAll(HttpHeaders.SetCookie)?.forEach {
@@ -282,7 +303,7 @@ class AO3Wrapper(
                     "user_credentials" -> session.userCredentials = cookie.value
                     "flash_is_set" -> {
                     }
-                    else -> logger().warn("unused cookie ${cookie.name}, ${cookie.value}")
+                    else -> logger.warn("unused cookie ${cookie.name}, ${cookie.value}")
                 }
             }
         }
@@ -297,14 +318,18 @@ class AO3Wrapper(
      * @return true if this user is being recognized as logged in
      */
     suspend fun validateSession(session: Session): Boolean {
-        val response: HttpResponse = httpClient.get(locations.login_loc) {
-            with(session) {
-                setSessionCookies()
-            }
-        }
-
+        val response: HttpResponse = httpClient.getWithSession(locations.login_loc, session)
         return response.status == HttpStatusCode.Found
     }
+
+    private suspend fun HttpClient.getWithSession(location: String, session: Session?): HttpResponse =
+        this.get(location) {
+            session?.let {
+                with(session) {
+                    setSessionCookies()
+                }
+            }
+        }
 
     override fun close() {
         httpClient.close()

@@ -1,13 +1,17 @@
 package wrapper.parser
 
-import constants.work_properties.*
-import exception.SearchParserException
-import model.work.ArchiveSymbols
-import model.work.Creator
-import model.work.Tag
-import model.work.Work
+import constants.workproperties.*
+import exception.parserexception.SearchParserException
+import model.result.work.ArchiveSymbols
+import model.result.work.Creator
+import model.result.work.Tag
+import model.result.work.Work
+import mu.KotlinLogging
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
+import util.commaSeparatedToInt
+
+private val logger = KotlinLogging.logger {}
 
 internal fun extractWork(article: Element): Work {
     val headerLinks: Map<String, Any> =
@@ -23,7 +27,8 @@ internal fun extractWork(article: Element): Work {
         ),
         title = headerLinks["title"] as String,
         creators = headerLinks["authors"] as ArrayList<Creator>,
-        tags = extractTagValues(article.getElementsByClass("tag")).filter { it.tagType != TagType.UNKNOWN }.toMutableList(),
+        tags = extractTagValues(article.getElementsByClass("tag")).filter { it.tagType != TagType.UNKNOWN }
+            .toMutableList(),
         summary = if (article.getElementsByTag("blockquote")
                 .isNotEmpty()
         ) article.getElementsByTag("blockquote")[0].children().eachText()
@@ -44,13 +49,13 @@ internal fun extractWork(article: Element): Work {
 }
 
 private fun extractHeaderValues(links: Elements): Map<String, Any> {
-    val HeaderValuesMap = HashMap<String, Any>()
+    val headerValuesMap = HashMap<String, Any>()
 
-    HeaderValuesMap["title"] = links[0].text()
+    headerValuesMap["title"] = links[0].text()
 
-    HeaderValuesMap["authors"] = ArrayList<Creator>()
+    headerValuesMap["authors"] = ArrayList<Creator>()
     for (index in 1 until links.size) {
-        (HeaderValuesMap["authors"] as ArrayList<Creator>).add(
+        (headerValuesMap["authors"] as ArrayList<Creator>).add(
             Creator(
                 authorUserName = ParserRegex.authorUserRegex.getRegexFound(links[index].attr("href"), ""),
                 authorPseudoName = ParserRegex.authorPseudoRegex.getRegexFound(links[index].attr("href"), "")
@@ -58,7 +63,7 @@ private fun extractHeaderValues(links: Elements): Map<String, Any> {
         )
     }
 
-    return HeaderValuesMap
+    return headerValuesMap
 }
 
 private fun extractTagValues(links: Elements): ArrayList<Tag> {
@@ -105,28 +110,25 @@ private fun extractStats(links: Elements): Map<String, Any?> {
     val statsMap = HashMap<String, Any?>()
 
     for (link in links) {
-        val className = link.className().toString()
-        when (className) {
+        when (val className = link.className().toString()) {
             "language" -> statsMap["language"] = Language.languageMap.getOrDefault(link.text(), Language.UNKNOWN)
-            "words" -> statsMap["words"] = link.text().replace(",", "").toInt()
+            "words" -> statsMap["words"] = link.text().commaSeparatedToInt()
             "chapters" -> {
                 statsMap["latestChapter"] =
                     ParserRegex.chapterRegex.getRegexFound(
-                        if (link.getElementsByTag("a")
-                                .isNullOrEmpty()
-                        ) "" else link.getElementsByTag("a")[0].attr("href"),
-                        0
+                        if (link.getElementsByTag("a").isNullOrEmpty()) ""
+                        else link.getElementsByTag("a")[0].attr("href"), 0
                     )
                 statsMap["chapterTotal"] = ParserRegex.chapterTotalRegex.getRegexFound(link.text().replace(",", ""))
                 statsMap["chapterCurrent"] =
                     ParserRegex.chapterCurrentRegex.getRegexFound(link.text().replace(",", ""), 0)
             }
-            "collections" -> statsMap["collections"] = link.text().replace(",", "").toInt()
-            "comments" -> statsMap["comments"] = link.text().replace(",", "").toInt()
-            "kudos" -> statsMap["kudos"] = link.text().replace(",", "").toInt()
-            "bookmarks" -> statsMap["bookmarks"] = link.text().replace(",", "").toInt()
-            "hits" -> statsMap["hits"] = link.text().replace(",", "").toInt()
-            else -> print("$className unrecognized")
+            "collections" -> statsMap["collections"] = link.text().commaSeparatedToInt()
+            "comments" -> statsMap["comments"] = link.text().commaSeparatedToInt()
+            "kudos" -> statsMap["kudos"] = link.text().commaSeparatedToInt()
+            "bookmarks" -> statsMap["bookmarks"] = link.text().commaSeparatedToInt()
+            "hits" -> statsMap["hits"] = link.text().commaSeparatedToInt()
+            else -> logger.warn("$className unrecognized, ${link.flattenedHtml()}")
         }
     }
 

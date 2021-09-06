@@ -5,11 +5,13 @@ const val ao3_login: String = "$ao3_url/users/login"
 
 val ao3_search = { query: String, page: Int -> "$ao3_url/works/search?$query&page=$page" }
 
-val ao3_bookmark_search = {query: String, page: Int -> "https://archiveofourown.org/bookmarks/search?$query&page=$page"}
+val ao3_bookmark_search =
+    { query: String, page: Int -> "https://archiveofourown.org/bookmarks/search?$query&page=$page" }
 
 val ao3_sort_and_filter = { filter: String, page: Int -> "$ao3_url/works?$filter&page=$page" }
 
-val ao3_chapter = { work_id: Int, chapter_id: Int -> "$ao3_url/works/$work_id/chapters/$chapter_id" }
+val ao3_chapter = { chapter_id: Int -> "$ao3_url/chapters/$chapter_id" }
+val ao3_firstChapter = { work_id: Int -> "$ao3_url/works/$work_id" }
 
 val ao3_download = { work_id: Int, extension: DownloadType -> "$ao3_url/downloads/$work_id/a.${extension.extension}" }
 

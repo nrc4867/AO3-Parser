@@ -18,6 +18,8 @@ fun encodeParameter(name: String, value: String, array: Boolean = false) =
 
 fun String.encode(charset: Charset = StandardCharsets.UTF_8): String = URLEncoder.encode(this, charset)
 
+fun String.commaSeparatedToInt() = this.replace(",", "").toInt()
+
 fun loginForm(userName: String, userPassword: String, authenticity_token: String, rememberMe: Boolean) =
     "utf8=$check&" +
     "authenticity_token=$authenticity_token&" +

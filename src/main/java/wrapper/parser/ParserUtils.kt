@@ -1,5 +1,6 @@
 package wrapper.parser
 
+import org.jsoup.nodes.Element
 import java.time.format.DateTimeFormatter
 
 internal object ParserRegex {
@@ -42,3 +43,5 @@ internal fun Regex.getRegexFound(text: String, default: String): String {
     val res = this.find(text)?.value
     return res ?: default
 }
+
+internal fun Element.flattenedHtml() = this.outerHtml().trim().replace("\n", "")
