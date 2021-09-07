@@ -38,7 +38,7 @@ class AO3Wrapper(
     private val locations: LinkLocations = LinkLocations()
 ) : Closeable {
 
-    private val logger = KotlinLogging.logger {  }
+    private val logger = KotlinLogging.logger { }
 
     /**
      * parser for the search results
@@ -248,13 +248,14 @@ class AO3Wrapper(
      * @param session: A session which has permission to view this work
      */
     suspend fun getFirstChapter(workId: Int, session: Session? = null): ChapterResult {
-        val chapterLocation: Int =
-            httpClient.getWithSession(
-                locations.first_chapter_location(workId),
-                session
-            ).headers[HttpHeaders.Location]?.substringAfterLast('/')?.toInt()
+        val response: HttpResponse = httpClient.getWithSession(locations.first_chapter_location(workId), session)
+        if (response.status == HttpStatusCode.Found) { // multichapter work
+            val chapterLocation: Int =
+            response.headers[HttpHeaders.Location]?.substringAfterLast('/')?.toInt()
                 ?: throw WorkDoesNotExistException(workId)
-        return getChapter(chapterLocation, session)
+            return getChapter(chapterLocation, session)
+        }
+        return chapterParser.parsePage(response.toString())
     }
 
 
