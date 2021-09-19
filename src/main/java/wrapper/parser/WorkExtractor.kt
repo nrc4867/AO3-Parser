@@ -9,8 +9,8 @@ import model.result.work.Work
 import mu.KotlinLogging
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
-import wrapper.parser.Stat.*
 import util.commaSeparatedToInt
+import wrapper.parser.Stat.*
 
 private enum class Stat {
     LANGUAGE,
@@ -88,11 +88,7 @@ private fun extractTagValues(links: Elements): ArrayList<Tag> {
             Tag(
                 text = link.text(),
                 tagType = TagType.tagTypeMap.getOrDefault(
-                    ParserRegex.tagTypeRegex.getRegexFound(
-                        if (!link.parent().tagName().equals("strong")) link.parent().attr("class")
-                        else link.parent().parent().attr("class"),
-                        ""
-                    ),
+                    ParserRegex.tagTypeRegex.getRegexFound(getTagType(link.parent())),
                     TagType.UNKNOWN
                 )
             )
@@ -100,6 +96,12 @@ private fun extractTagValues(links: Elements): ArrayList<Tag> {
     }
 
     return tags
+}
+
+private fun getTagType(tag: Element): String {
+    if (tag.tagName().equals("strong"))
+        return tag.attr("class")
+    return tag.parent().attr("class")
 }
 
 private fun extractRequiredTags(links: Elements): ArchiveSymbols {
@@ -116,8 +118,8 @@ private fun extractRequiredTags(links: Elements): ArchiveSymbols {
 }
 
 
-private fun getFirstClass(class_name: String): String {
-    return class_name.split(" ", limit = 2)[0]
+private fun getFirstClass(className: String): String {
+    return className.split(" ", limit = 2)[0]
 }
 
 private fun extractStats(links: Elements): Map<Stat, Any?> {
@@ -128,17 +130,10 @@ private fun extractStats(links: Elements): Map<Stat, Any?> {
             "language" -> statsMap[LANGUAGE] = Language.languageMap.getOrDefault(link.text(), Language.UNKNOWN)
             "words" -> statsMap[WORDS] = link.text().commaSeparatedToInt()
             "chapters" -> {
-                statsMap[LATEST_CHAPTER] =
-                    ParserRegex.chapterRegex.getRegexFound(
-                        if (link.getElementsByTag("a").isNullOrEmpty())
-                            ""
-                        else
-                            link.getElementsByTag("a")[0].attr("href"),
-                        0
-                    )
-                statsMap[CHAPTER_TOTAL] = ParserRegex.chapterTotalRegex.getRegexFound(link.text().replace(",", ""))
+                statsMap[LATEST_CHAPTER] = extractLatestChapterChapter(link.getElementsByTag("a"))
+                statsMap[CHAPTER_TOTAL] = ParserRegex.chapterTotalRegex.getRegexFound(link.text().removeCommas())
                 statsMap[CHAPTER_CURRENT] =
-                    ParserRegex.chapterCurrentRegex.getRegexFound(link.text().replace(",", ""), 0)
+                    ParserRegex.chapterCurrentRegex.getRegexFound(link.text().removeCommas(), 0)
             }
             "collections" -> statsMap[COLLECTIONS] = link.text().commaSeparatedToInt()
             "comments" -> statsMap[COMMENTS] = link.text().commaSeparatedToInt()
@@ -150,4 +145,12 @@ private fun extractStats(links: Elements): Map<Stat, Any?> {
     }
 
     return statsMap
+}
+
+private fun String.removeCommas() = this.replace(",", "")
+
+private fun extractLatestChapterChapter(links: Elements): Int {
+    if (links.isNullOrEmpty())
+        return 0
+    return ParserRegex.chapterRegex.getRegexFound(links[0].attr("href"), 0)
 }
