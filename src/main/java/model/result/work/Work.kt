@@ -7,6 +7,7 @@ import java.time.temporal.TemporalAccessor
 @kotlinx.serialization.Serializable
 data class Work(
     val workId: Int,
+    val restricted: Boolean,
     val latestChapter: Int,
     val archiveSymbols: ArchiveSymbols,
     val title: String,
@@ -15,7 +16,7 @@ data class Work(
     val summary: String,
     val chapterCount: Int,
     val chapterTotal: Int?,
-    var word_count: Int,
+    var wordCount: Int,
     val dateUpdated: TemporalAccessor,
     val language: Language,
     val comments: Int,
