@@ -5,5 +5,6 @@ enum class SummaryType {
     WORK_NOTE,
     CHAPTER_SUMMARY,
     CHAPTER_NOTE,
-    CHAPTER_END_NOTE
+    CHAPTER_END_NOTE,
+    WORK_END_NOTE
 }

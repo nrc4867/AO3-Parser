@@ -2,10 +2,7 @@ package wrapper.parser
 
 import constants.workproperties.*
 import exception.parserexception.SearchParserException
-import model.result.work.ArchiveSymbols
-import model.result.work.Creator
-import model.result.work.Tag
-import model.result.work.Work
+import model.result.work.*
 import mu.KotlinLogging
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
@@ -49,17 +46,20 @@ internal fun extractWork(article: Element): Work {
                 .isNotEmpty()
         ) article.getElementsByTag("blockquote")[0].children().eachText()
             .joinToString(separator = "\n") else "",
-        chapterCount = stats.getOrDefault(CHAPTER_CURRENT, 0) as Int,
-        chapterTotal = if (stats[CHAPTER_TOTAL]?.toString()
-                ?.equals("?") == true
-        ) null else stats[CHAPTER_TOTAL]?.toString()?.toInt(),
-        wordCount = stats.getOrDefault(WORDS, 0) as Int,
-        dateUpdated = DateTimeFormats.ddMMMYYYY.parse(article.getElementsByClass("dateTime")[0].text()),
         language = stats.getOrDefault(LANGUAGE, Language.UNKNOWN) as Language,
-        comments = stats.getOrDefault(COMMENTS, 0) as Int,
-        kudos = stats.getOrDefault(KUDOS, 0) as Int,
-        bookmarks = stats.getOrDefault(BOOKMARKS, 0) as Int,
-        hits = stats.getOrDefault(HITS, 0) as Int
+        stats = Stats(
+            chapterCount = stats.getOrDefault(CHAPTER_CURRENT, 0) as Int,
+            chapterTotal = if (stats[CHAPTER_TOTAL]?.toString()
+                    ?.equals("?") == true
+            ) null else stats[CHAPTER_TOTAL]?.toString()?.toInt(),
+            wordCount = stats.getOrDefault(WORDS, 0) as Int,
+            dates = WorkSearchDateStat(DateTimeFormats.ddMMMYYYY.parse(article.getElementsByClass("dateTime")[0].text())),
+            comments = stats.getOrDefault(COMMENTS, 0) as Int,
+            kudos = stats.getOrDefault(KUDOS, 0) as Int,
+            bookmarks = stats.getOrDefault(BOOKMARKS, 0) as Int,
+            hits = stats.getOrDefault(HITS, 0) as Int,
+
+        )
     )
 
 }

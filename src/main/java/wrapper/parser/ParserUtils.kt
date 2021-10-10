@@ -25,23 +25,28 @@ internal object ParserRegex {
 
     val tagWithoutDigitsRegex: Regex by lazy { Regex(".* ") }
     val bookmarkerPseudo: Regex by lazy { Regex("(?<=pseuds[/])[a-zA-Z]+") }
+
+    val collectionRegex: Regex by lazy { Regex("(?<=/collections/)\\w+") }
 }
 
 internal object DateTimeFormats {
     val ddMMMYYYY: DateTimeFormatter by lazy { DateTimeFormatter.ofPattern("dd MMM YYYY") }
     val YYYYMMdd: DateTimeFormatter by lazy { DateTimeFormatter.ofPattern("(YYYY-MM-dd)") }
+    val YYYYMMddEscaped: DateTimeFormatter by lazy { DateTimeFormatter.ofPattern("YYYY-MM-dd") }
 }
 
 internal fun Regex.getRegexFound(text: String): String? = this.find(text)?.value
+internal fun Regex.getRegexFound(text: String?, default: Int): Int = this.find(text ?: "")?.value?.toInt() ?: default
+internal fun Regex.getRegexFound(text: String?, default: String): String = this.find(text ?: default)?.value ?: default
 
-internal fun Regex.getRegexFound(text: String, default: Int): Int {
-    val res = this.find(text)?.value
-    return res?.toInt() ?: default
-}
+internal fun Regex.getWithZeroDefault(text: String) = getRegexFound(text, 0)
+internal fun Regex.getWithEmptyDefault(text: String) = getRegexFound(text, "")
 
-internal fun Regex.getRegexFound(text: String, default: String): String {
-    val res = this.find(text)?.value
-    return res ?: default
-}
 
 internal fun Element.flattenedHtml() = this.outerHtml().trim().replace("\n", "")
+
+internal fun Element.href() = this.attr("href")
+
+internal fun Element.getFirstByTag(tagName: String) = this.getElementsByTag(tagName)[0]
+internal fun Element.getFirstByClass(className: String) = this.getElementsByClass(className)[0]
+internal fun Element.getFirstByAttribute(attrName: String) = this.getElementsByAttribute(attrName)[0]

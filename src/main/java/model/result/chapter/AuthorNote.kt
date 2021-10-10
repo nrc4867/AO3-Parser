@@ -1,8 +1,7 @@
 package model.result.chapter
 
 import constants.SummaryType
-import kotlinx.serialization.Contextual
-import kotlinx.serialization.Serializable
+import java.io.Serializable
 
-@Serializable
-data class AuthorNote(val summaryType: SummaryType, @Contextual val summaryText: String)
+@kotlinx.serialization.Serializable
+data class AuthorNote(val summaryType: SummaryType, val summaryText: String): Serializable

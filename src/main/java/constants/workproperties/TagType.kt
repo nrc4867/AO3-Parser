@@ -6,6 +6,7 @@ enum class TagType(val tagType: String) {
     RELATIONSHIP("relationships"),
     CHARACTER("characters"),
     FREEFORM("freeforms"),
+    RATING("rating"),
     UNKNOWN("unknown")
     ;
 
