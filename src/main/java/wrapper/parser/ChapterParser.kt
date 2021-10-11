@@ -1,5 +1,6 @@
 package wrapper.parser
 
+import constants.SummaryType
 import constants.workproperties.Language
 import constants.workproperties.Language.Companion.languageMap
 import constants.workproperties.TagType
@@ -34,7 +35,7 @@ class ChapterParser : Parser<ChapterResult> {
             workMeta = parseWorkMeta(workMeta),
             chapterNavigationResult = parseNavigation(
                 preface[0],
-                mainBody.getFirstByClass("mark"),
+                mainBody.getFirstByClass("download").getFirstByTag("ul").getFirstByTag("a"),
                 mainBody.getElementById("selected_id").children()
             ),
             chapterPosition = parsePosition(
@@ -43,17 +44,17 @@ class ChapterParser : Parser<ChapterResult> {
             chapterId = parseChapterID(
                 mainBody.getElementById("selected_id").getElementsByAttribute("selected").getOrNull(0)
             ),
-            authorNotes = parseAuthorNotes(),
-            inspiredWorks = parseInspiredWorks(),
-            chapterText = workMeta.getFirstByAttribute("article").outerHtml()
+            authorNotes = parseAuthorNotes(mainBody),
+            inspiredWorks = parseInspiredWorks(mainBody.getElementById("children")?.getFirstByTag("ul")?.children()),
+            chapterText = mainBody.getElementsByAttributeValue("role", "article").first().outerHtml()
         )
     }
 
     private fun parseWorkMeta(workMeta: Element): WorkMeta {
         val tags = mutableListOf<Tag>()
         lateinit var language: Language
-        lateinit var collection: List<WorkCollection>
-        lateinit var series: List<WorkMetaSeries>
+        var collection: List<WorkCollection> = listOf()
+        var series: List<WorkMetaSeries> = listOf()
         lateinit var stats: Stats<WorkMetaDateStat>
 
         val definiteDescriptions = workMeta.getElementsByTag("dd")
@@ -67,7 +68,7 @@ class ChapterParser : Parser<ChapterResult> {
                 "language" -> language = languageMap.getOrDefault(dd.text(), Language.UNKNOWN)
                 "collections" -> collection = parseCollections(dd.getElementsByTag("a"))
                 "series" -> series = extractSeries(dd.children())
-                "stats" -> extractStats(dd.getElementsByTag("dl").first())
+                "stats" -> stats = extractStats(dd.getElementsByTag("dl").first())
                 else -> logger.warn("unknown work meta option ${dd.className()}")
             }
         }
@@ -114,8 +115,8 @@ class ChapterParser : Parser<ChapterResult> {
 
         for (stat in stats.getElementsByTag("dd")) {
             when (stat.className()) {
-                "published" -> datePublished = YYYYMMddEscaped.parse(stats.text())
-                "status" -> updated = YYYYMMddEscaped.parse(stats.text())
+                "published" -> datePublished = YYYYMMddEscaped.parse(stat.text())
+                "status" -> updated = YYYYMMddEscaped.parse(stat.text())
                 "words" -> wordCount = stat.text().commaSeparatedToInt()
                 "chapters" -> {
                     chapterCount = chapterCurrentRegex.getWithZeroDefault(stat.text())
@@ -164,7 +165,7 @@ class ChapterParser : Parser<ChapterResult> {
 
     private fun parseNavigation(
         preface: Element,
-        markForLater: Element?,
+        linkWithWorkID: Element,
         chapterOptions: Elements?
     ): ChapterNavigationResult<BasicChapterInfo>? {
         if (chapterOptions == null)
@@ -176,7 +177,7 @@ class ChapterParser : Parser<ChapterResult> {
         }
 
         return ChapterNavigationResult(
-            digitsRegex.getRegexFound(markForLater?.attr("href"), 0),
+            digitsRegex.getRegexFound(linkWithWorkID.href(), 0),
             preface.getFirstByClass("title").text(),
             extractAuthors(preface.getFirstByClass("byline")),
             chapters
@@ -210,11 +211,62 @@ class ChapterParser : Parser<ChapterResult> {
         return null
     }
 
-    private fun parseAuthorNotes(): List<AuthorNote> {
-        return emptyList()
+    private fun parseAuthorNotes(work: Element): List<AuthorNote> {
+
+        fun Element.getBlockquote() = this.getElementsByTag("blockquote")
+
+        val authorNotes = mutableListOf<AuthorNote>()
+
+        for (summary in work.getElementsByClass("summary")) {
+            authorNotes.add(AuthorNote(SummaryType.SUMMARY, summary.getBlockquote().outerHtml()))
+        }
+
+        for (note in work.getElementsByClass("notes")) {
+            val blockquote = note.getBlockquote().outerHtml()
+            if (note.attributes().get("id") == "work_endnotes") {
+                authorNotes.add(AuthorNote(SummaryType.WORK_END_NOTE, blockquote))
+            } else if (note.hasClass("end")) {
+                authorNotes.add(AuthorNote(SummaryType.CHAPTER_END_NOTE, blockquote))
+            } else {
+                authorNotes.add(AuthorNote(SummaryType.CHAPTER_NOTE, blockquote))
+            }
+        }
+
+        return authorNotes
     }
 
-    private fun parseInspiredWorks(): List<InspiredWork> {
-        return emptyList()
+    private fun parseInspiredWorks(inspiredList: Elements?): List<InspiredWork>? {
+        if (inspiredList == null)
+            return null
+
+        val inspiredWorks = mutableListOf<InspiredWork>()
+        for (work in inspiredList) {
+
+            val authors = mutableListOf<Creator>()
+
+            for (author in work.getElementsByTag("a").filter { it.hasAttr("rel") }) {
+                authors.add(
+                    Creator(
+                        authorUserRegex.getWithEmptyDefault(author.href()),
+                        authorPseudoRegex.getWithEmptyDefault(author.href())
+                    )
+                )
+            }
+
+            work.getFirstByTag("a").let {
+                if (it.hasAttr("rel")) {
+                    inspiredWorks.add(InspiredWork("Restricted Work", null, authors))
+                } else {
+                    inspiredWorks.add(
+                        InspiredWork(
+                            it.text(),
+                            digitsRegex.getWithZeroDefault(it.href()),
+                            authors
+                        )
+                    )
+                }
+            }
+        }
+        return inspiredWorks
     }
 }
