@@ -16,9 +16,12 @@ import wrapper.parser.DateTimeFormats.YYYYMMddEscaped
 import wrapper.parser.ParserRegex.authorPseudoRegex
 import wrapper.parser.ParserRegex.authorUserRegex
 import wrapper.parser.ParserRegex.chapterCurrentRegex
+import wrapper.parser.ParserRegex.chapterTitleRegex
 import wrapper.parser.ParserRegex.chapterTotalRegex
 import wrapper.parser.ParserRegex.collectionRegex
 import wrapper.parser.ParserRegex.digitsRegex
+import wrapper.parser.ParserRegex.giftRegex
+import wrapper.parser.ParserRegex.inspiredTranslationRegex
 import java.time.temporal.TemporalAccessor
 
 private val logger = KotlinLogging.logger {}
@@ -31,22 +34,30 @@ class ChapterParser : Parser<ChapterResult> {
         val workMeta = mainBody.getElementsByClass("meta").first()
         val preface = mainBody.getElementsByClass("preface")
 
+        val associations = parseAssociations(
+            mainBody.getElementsByClass("associations").firstOrNull()?.children()
+        )
+
         return ChapterResult(
             workMeta = parseWorkMeta(workMeta),
+            restricted = mainBody.getElementsByAttributeValue("title", "Restricted").size > 0,
             chapterNavigationResult = parseNavigation(
                 preface[0],
                 mainBody.getFirstByClass("download").getFirstByTag("ul").getFirstByTag("a"),
-                mainBody.getElementById("selected_id").children()
+                mainBody.getElementById("selected_id")?.children()
             ),
             chapterPosition = parsePosition(
-                mainBody.getElementById("selected_id").getElementsByAttribute("selected").getOrNull(0)
+                mainBody.getElementById("selected_id")?.getElementsByAttribute("selected")?.getOrNull(0)
             ),
             chapterId = parseChapterID(
-                mainBody.getElementById("selected_id").getElementsByAttribute("selected").getOrNull(0)
+                mainBody.getElementById("selected_id")?.getElementsByAttribute("selected")?.getOrNull(0)
             ),
             authorNotes = parseAuthorNotes(mainBody),
+            createdFor = associations.first,
+            inspiredBy = associations.second,
             inspiredWorks = parseInspiredWorks(mainBody.getElementById("children")?.getFirstByTag("ul")?.children()),
-            chapterText = mainBody.getElementsByAttributeValue("role", "article").first().outerHtml()
+            translations = associations.third,
+            chapterText = mainBody.getElementsByAttributeValue("role", "article").first().outerHtml(),
         )
     }
 
@@ -65,11 +76,14 @@ class ChapterParser : Parser<ChapterResult> {
                 "category tags" -> tags.addAll(dd.extractTags(RELATIONSHIP))
                 "fandom tags" -> tags.addAll(dd.extractTags(FANDOMS))
                 "freeform tags" -> tags.addAll(dd.extractTags(FREEFORM))
+                "character tags" -> tags.addAll(dd.extractTags(CHARACTER))
                 "language" -> language = languageMap.getOrDefault(dd.text(), Language.UNKNOWN)
                 "collections" -> collection = parseCollections(dd.getElementsByTag("a"))
                 "series" -> series = extractSeries(dd.children())
+                "published", "status", "words", "chapters", "comments", "kudos", "bookmarks", "hits" -> {
+                }
                 "stats" -> stats = extractStats(dd.getElementsByTag("dl").first())
-                else -> logger.warn("unknown work meta option ${dd.className()}")
+                else -> logger.warn("unknown work meta option: ${dd.className()}")
             }
         }
 
@@ -131,7 +145,11 @@ class ChapterParser : Parser<ChapterResult> {
             }
         }
 
-        val complete: Boolean = stats.getElementsByClass("status")[0].text().startsWith("Completed")
+        val complete: Boolean =
+            stats.getElementsByClass("status").firstOrNull()?.text()?.startsWith("Completed") ?: run {
+                updated = datePublished
+                true
+            }
 
         return Stats(
             chapterCount = chapterCount,
@@ -167,17 +185,22 @@ class ChapterParser : Parser<ChapterResult> {
         preface: Element,
         linkWithWorkID: Element,
         chapterOptions: Elements?
-    ): ChapterNavigationResult<BasicChapterInfo>? {
-        if (chapterOptions == null)
-            return null
-
+    ): ChapterNavigationResult<BasicChapterInfo> {
         val chapters = mutableListOf<BasicChapterInfo>()
-        for ((position, option) in chapterOptions.withIndex()) {
-            chapters.add(BasicChapterInfo(position, option.text(), option.attr("value").toInt()))
+        chapterOptions?.let {
+            for ((position, option) in chapterOptions.withIndex()) {
+                chapters.add(
+                    BasicChapterInfo(
+                        position,
+                        chapterTitleRegex.getWithEmptyDefault(option.text()),
+                        option.attr("value").toInt()
+                    )
+                )
+            }
         }
 
         return ChapterNavigationResult(
-            digitsRegex.getRegexFound(linkWithWorkID.href(), 0),
+            digitsRegex.getWithZeroDefault(linkWithWorkID.href()),
             preface.getFirstByClass("title").text(),
             extractAuthors(preface.getFirstByClass("byline")),
             chapters
@@ -235,38 +258,78 @@ class ChapterParser : Parser<ChapterResult> {
         return authorNotes
     }
 
+    private fun parseAssociations(associations: Elements?): Triple<List<Creator>?, List<InspiredWork>?, List<TranslatedWork>?> {
+        if (associations == null) {
+            return Triple(null, null, null)
+        }
+
+        var createdFor: MutableList<Creator>? = null
+        var inspiredBy: MutableList<InspiredWork>? = null
+        var translated: MutableList<TranslatedWork>? = null
+
+        for (associated in associations) {
+            val firstLink = associated.getFirstByTag("a")
+            val giftRegex = giftRegex.getRegexFound(firstLink.href())
+            if (giftRegex != null) {
+                if (createdFor == null) createdFor = mutableListOf()
+                createdFor.add(Creator(giftRegex, giftRegex))
+            } else {
+                val inspiredWork = parseInspiredWork(associated)
+                if (associated.text().startsWith("Inspired")) {
+                    if (inspiredBy == null) inspiredBy = mutableListOf()
+                    inspiredBy.add(inspiredWork)
+                } else {
+                    if (translated == null) translated = mutableListOf()
+                    translated.add(
+                        TranslatedWork(
+                            languageMap.getOrDefault(
+                                inspiredTranslationRegex.getWithEmptyDefault(
+                                    associated.text()
+                                ), Language.UNKNOWN
+                            ), inspiredWork
+                        )
+                    )
+                }
+            }
+        }
+
+        return Triple(createdFor, inspiredBy, translated)
+    }
+
     private fun parseInspiredWorks(inspiredList: Elements?): List<InspiredWork>? {
         if (inspiredList == null)
             return null
 
         val inspiredWorks = mutableListOf<InspiredWork>()
         for (work in inspiredList) {
-
-            val authors = mutableListOf<Creator>()
-
-            for (author in work.getElementsByTag("a").filter { it.hasAttr("rel") }) {
-                authors.add(
-                    Creator(
-                        authorUserRegex.getWithEmptyDefault(author.href()),
-                        authorPseudoRegex.getWithEmptyDefault(author.href())
-                    )
-                )
-            }
-
-            work.getFirstByTag("a").let {
-                if (it.hasAttr("rel")) {
-                    inspiredWorks.add(InspiredWork("Restricted Work", null, authors))
-                } else {
-                    inspiredWorks.add(
-                        InspiredWork(
-                            it.text(),
-                            digitsRegex.getWithZeroDefault(it.href()),
-                            authors
-                        )
-                    )
-                }
-            }
+            inspiredWorks.add(parseInspiredWork(work))
         }
         return inspiredWorks
+    }
+
+    private fun parseInspiredWork(work: Element): InspiredWork {
+        val authors = mutableListOf<Creator>()
+
+        for (author in work.getElementsByTag("a").filter { it.hasAttr("rel") }) {
+            authors.add(
+                Creator(
+                    authorUserRegex.getWithEmptyDefault(author.href()),
+                    authorPseudoRegex.getWithEmptyDefault(author.href())
+                )
+            )
+        }
+
+        work.getFirstByTag("a").let {
+            return if (it.hasAttr("rel")) {
+                InspiredWork("Restricted Work", null, authors)
+            } else {
+                InspiredWork(
+                    it.text(),
+                    digitsRegex.getWithZeroDefault(it.href()),
+                    authors
+                )
+
+            }
+        }
     }
 }

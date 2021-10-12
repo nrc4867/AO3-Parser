@@ -255,7 +255,7 @@ class AO3Wrapper(
                 ?: throw WorkDoesNotExistException(workId)
             return getChapter(chapterLocation, session)
         }
-        return chapterParser.parsePage(response.toString())
+        return chapterParser.parsePage(response.receive())
     }
 
 
@@ -325,6 +325,7 @@ class AO3Wrapper(
 
     private suspend fun HttpClient.getWithSession(location: String, session: Session?): HttpResponse =
         this.get(location) {
+            setCookie("view_adult", "true")
             session?.let {
                 with(session) {
                     setSessionCookies()

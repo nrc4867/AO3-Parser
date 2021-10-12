@@ -27,6 +27,9 @@ internal object ParserRegex {
     val bookmarkerPseudo: Regex by lazy { Regex("(?<=pseuds[/])[a-zA-Z]+") }
 
     val collectionRegex: Regex by lazy { Regex("(?<=/collections/)\\w+") }
+
+    val giftRegex: Regex by lazy { Regex("(?<=/users/)[a-zA-Z]+(?=/gifts)") }
+    val inspiredTranslationRegex: Regex by lazy { Regex("(?<=Translation into )[\\Wa-zA-Z]+(?= available\\W*)") }
 }
 
 internal object DateTimeFormats {
