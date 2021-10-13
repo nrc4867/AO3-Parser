@@ -30,12 +30,22 @@ internal object ParserRegex {
 
     val giftRegex: Regex by lazy { Regex("(?<=/users/)[a-zA-Z]+(?=/gifts)") }
     val inspiredTranslationRegex: Regex by lazy { Regex("(?<=Translation into )[\\Wa-zA-Z]+(?= available\\W*)") }
+
+    val totalCommentsRegex: Regex by lazy { Regex("(?<=Hide Comments \\()[1-9]*(?=\\).*)") }
+    val currentPageRegex: Regex by lazy { Regex("(?<=<span class=\\\\\"current\\\\\">)[1-9]*(?=<\\\\/span>.*)") }
+    val commentTreeRegex: Regex by lazy { Regex("(?<=\\.append\\(\").*(?=\\);)") }
+
+    val commentTreeReplacementDoubleQuote: Regex by lazy { Regex("\\\\\"") }
+    val commentTreeReplacementSingleQuote: Regex by lazy { Regex("\\\\\'") }
+    val commentTreeReplacementNewLine: Regex by lazy { Regex("\\\\n") }
+    val commentTreeReplacementForwardSlash: Regex by lazy { Regex("\\\\/") }
 }
 
 internal object DateTimeFormats {
     val ddMMMYYYY: DateTimeFormatter by lazy { DateTimeFormatter.ofPattern("dd MMM YYYY") }
     val YYYYMMdd: DateTimeFormatter by lazy { DateTimeFormatter.ofPattern("(YYYY-MM-dd)") }
     val YYYYMMddEscaped: DateTimeFormatter by lazy { DateTimeFormatter.ofPattern("YYYY-MM-dd") }
+    val commentDate: DateTimeFormatter by lazy { DateTimeFormatter.ofPattern("EEE dd LLL yyyy hh:mmaa zzz") }
 }
 
 internal fun Regex.getRegexFound(text: String): String? = this.find(text)?.value

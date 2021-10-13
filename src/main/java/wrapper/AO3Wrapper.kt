@@ -17,13 +17,13 @@ import io.ktor.http.*
 import io.ktor.utils.io.core.*
 import model.Session
 import model.result.AutoCompleteResult
+import model.result.CommentResult
 import model.result.PersonResult
 import model.result.SearchResult
 import model.result.bookmark.BookmarkSearchResult
 import model.result.chapter.ChapterNavigationResult
 import model.result.chapter.ChapterResult
 import model.result.chapter.FullChapterInfo
-import model.result.comment.CommentResult
 import model.result.filterSidebar.TagSortAndFilterResult
 import model.result.work.Work
 import model.searchqueries.*

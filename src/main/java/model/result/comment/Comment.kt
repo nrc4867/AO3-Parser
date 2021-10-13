@@ -6,10 +6,13 @@ import java.time.temporal.TemporalAccessor
 
 @kotlinx.serialization.Serializable
 data class Comment(
-    val commenter: Creator,
-    val guestComment: Boolean,
+    val commentID: Int,
+    val parentThreadID: Int?,
+    val displayName: String,
+    val creator: Creator,
     val imageLink: String,
     val chapter: Int,
     val datePosted: TemporalAccessor,
+    val contents: String,
     val subComments: List<Comment>
 ) : Serializable

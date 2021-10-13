@@ -1,5 +1,6 @@
-package model.result.comment
+package model.result
 
+import model.result.comment.Comment
 import java.io.Serializable
 
 
