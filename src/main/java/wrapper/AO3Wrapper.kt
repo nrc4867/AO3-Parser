@@ -23,6 +23,7 @@ import model.result.bookmark.BookmarkSearchResult
 import model.result.chapter.ChapterNavigationResult
 import model.result.chapter.ChapterResult
 import model.result.chapter.FullChapterInfo
+import model.result.comment.CommentResult
 import model.result.filterSidebar.TagSortAndFilterResult
 import model.result.work.Work
 import model.searchqueries.*
@@ -79,6 +80,11 @@ class AO3Wrapper(
      * Parser for chapter query
      */
     var chapterParser = ChapterParser()
+
+    /**
+     * Parser for comments
+     */
+    var commentsParser = CommentsParser()
 
     /**
      * Perform a search
@@ -233,6 +239,12 @@ class AO3Wrapper(
         return chapterNavigationParser.parsePage(response.receive())
     }
 
+    /**
+     * Request a chapter from a work
+     *
+     * @param chapterId the id of the chapter
+     * @param session a session which has the permission to view this work
+     */
     suspend fun getChapter(chapterId: Int, session: Session? = null): ChapterResult {
         val response: HttpResponse = httpClient.getWithSession(ao3_chapter(chapterId), session)
         if (response.status != HttpStatusCode.OK)
@@ -251,13 +263,43 @@ class AO3Wrapper(
         val response: HttpResponse = httpClient.getWithSession(locations.first_chapter_location(workId), session)
         if (response.status == HttpStatusCode.Found) { // multichapter work
             val chapterLocation: Int =
-            response.headers[HttpHeaders.Location]?.substringAfterLast('/')?.toInt()
-                ?: throw WorkDoesNotExistException(workId)
+                response.headers[HttpHeaders.Location]?.substringAfterLast('/')?.toInt()
+                    ?: throw WorkDoesNotExistException(workId)
             return getChapter(chapterLocation, session)
         }
         return chapterParser.parsePage(response.receive())
     }
 
+    /**
+     * get comments from the entire work
+     *
+     * @param workId: The id of the work to get the comments from
+     * @param page: The page of the comments
+     * @param session: A session which has permission to view this work
+     */
+    suspend fun getCommentsFromWork(workId: Int, page: Int = 1, session: Session? = null): CommentResult =
+        getComments(locations.work_comment_location(workId, page), session)
+
+    /**
+     * get comments from a single chapter
+     *
+     * @param chapterId: The id of the chapter to get the comments from
+     * @param page: The page of the comments
+     * @param session: A session which has permission to view this work
+     */
+    suspend fun getCommentsFromChapter(chapterId: Int, page: Int = 1, session: Session? = null): CommentResult =
+        getComments(locations.chapter_comment_location(chapterId, page), session)
+
+    private suspend fun getComments(location: String, session: Session?): CommentResult {
+        return commentsParser.parsePage(httpClient.getCommentRequest(location, session).receive())
+    }
+
+    private suspend fun HttpClient.getCommentRequest(location: String, session: Session?): HttpResponse =
+        this.get(location) {
+            setSession(session)
+            // asks ao3 to return the jquery use to display the comments rather than the entire article
+            header("X-Requested-With", "XMLHttpRequest")
+        }
 
     /**
      * Login - Create a Session for AO3
@@ -326,12 +368,16 @@ class AO3Wrapper(
     private suspend fun HttpClient.getWithSession(location: String, session: Session?): HttpResponse =
         this.get(location) {
             setCookie("view_adult", "true")
-            session?.let {
-                with(session) {
-                    setSessionCookies()
-                }
+            setSession(session)
+        }
+
+    private fun HttpRequestBuilder.setSession(session: Session?) =
+        session?.let {
+            with(session) {
+                setSessionCookies()
             }
         }
+
 
     override fun close() {
         httpClient.close()
