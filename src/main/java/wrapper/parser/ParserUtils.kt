@@ -5,6 +5,7 @@ import java.time.format.DateTimeFormatter
 
 internal object ParserRegex {
     val digitsRegex: Regex by lazy { Regex("\\d+") }
+    val firstWordRegex: Regex by lazy { Regex("^([\\w\\-]+)") }
 
     val resultsFoundRegex: Regex by lazy { digitsRegex }
     val workIDRegex: Regex by lazy { digitsRegex }
@@ -35,6 +36,8 @@ internal object ParserRegex {
     val currentPageRegex: Regex by lazy { Regex("(?<=<span class=\\\\\"current\\\\\">)[1-9]*(?=<\\\\/span>.*)") }
     val commentTreeRegex: Regex by lazy { Regex("(?<=\\.append\\(\").*(?=\\);)") }
 
+    val commentEditedDateRegex: Regex by lazy { Regex("(?<=Last Edited ).*") }
+
     val commentTreeReplacementDoubleQuote: Regex by lazy { Regex("\\\\\"") }
     val commentTreeReplacementSingleQuote: Regex by lazy { Regex("\\\\\'") }
     val commentTreeReplacementNewLine: Regex by lazy { Regex("\\\\n") }
@@ -45,7 +48,7 @@ internal object DateTimeFormats {
     val ddMMMYYYY: DateTimeFormatter by lazy { DateTimeFormatter.ofPattern("dd MMM YYYY") }
     val YYYYMMdd: DateTimeFormatter by lazy { DateTimeFormatter.ofPattern("(YYYY-MM-dd)") }
     val YYYYMMddEscaped: DateTimeFormatter by lazy { DateTimeFormatter.ofPattern("YYYY-MM-dd") }
-    val commentDate: DateTimeFormatter by lazy { DateTimeFormatter.ofPattern("EEE dd LLL yyyy hh:mmaa zzz") }
+    val commentDate: DateTimeFormatter by lazy { DateTimeFormatter.ofPattern("EEE dd LLL yyyy hh:mma z") }
 }
 
 internal fun Regex.getRegexFound(text: String): String? = this.find(text)?.value

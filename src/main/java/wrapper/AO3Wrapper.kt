@@ -299,6 +299,7 @@ class AO3Wrapper(
             setSession(session)
             // asks ao3 to return the jquery use to display the comments rather than the entire article
             header("X-Requested-With", "XMLHttpRequest")
+            header("Accept", "*/*;q=0.5, text/javascript, application/javascript, application/ecmascript, application/x-ecmascript")
         }
 
     /**
