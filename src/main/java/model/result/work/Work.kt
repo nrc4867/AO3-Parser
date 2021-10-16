@@ -11,8 +11,9 @@ data class Work(
     val archiveSymbols: ArchiveSymbols,
     val title: String,
     val creators: List<Creator>,
-    val tags: MutableList<Tag>,
+    val tags: List<Tag>,
     val summary: String,
+    val series: List<WorkSeries>,
     val language: Language,
     val stats: Stats<WorkSearchDateStat>
 ) : Serializable

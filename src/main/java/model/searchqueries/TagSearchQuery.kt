@@ -67,6 +67,18 @@ data class TagSearchQuery(
 
 }
 
+private fun buildQuery(
+    searchString: StringBuilder,
+    include: TagSearchQuery,
+    exclude: TagSearchQuery,
+    workSearch: FilterWorkSearchQuery
+) {
+    workSearch.filterQuery(searchString)
+    include.tagQuery(searchString, INCLUDE_WORK_SEARCH)
+    exclude.tagQuery(searchString, EXCLUDE_WORK_SEARCH)
+    searchString.append("&${SearchQuery.SUFFIX}")
+}
+
 fun buildTagSearchQuery(
     tagId: String,
     include: TagSearchQuery,
@@ -74,10 +86,21 @@ fun buildTagSearchQuery(
     workSearch: FilterWorkSearchQuery
 ): String {
     val searchString = StringBuilder()
-    workSearch.filterQuery(searchString)
-    include.tagQuery(searchString, INCLUDE_WORK_SEARCH)
-    exclude.tagQuery(searchString, EXCLUDE_WORK_SEARCH)
+    buildQuery(searchString, include, exclude, workSearch)
     searchString.append("&tag_id=${tagId.encode()}")
-    searchString.append("&${SearchQuery.SUFFIX}")
+    return searchString.toString()
+}
+
+fun buildUserSearchQuery(
+    user: String,
+    pseudonym: String?,
+    include: TagSearchQuery,
+    exclude: TagSearchQuery,
+    workSearch: FilterWorkSearchQuery
+): String {
+    val searchString = StringBuilder()
+    buildQuery(searchString, include, exclude, workSearch)
+    searchString.append("&user_id=${user.encode()}")
+    pseudonym?.let { searchString.append("&pseud_id=${it.encode()}") }
     return searchString.toString()
 }

@@ -20,9 +20,9 @@ internal object ParserRegex {
     val chapterNumberRegex: Regex by lazy { digitsRegex }
     val chapterTitleRegex: Regex by lazy { Regex("(?<=[.] )(.*)") }
 
-    val startWorkRegex: Regex by lazy { digitsRegex }
+    val startWorkRegex: Regex by lazy { Regex("\\d+(?= -)") }
     val endWorkRegex: Regex by lazy { Regex("(?<=[-] )\\d+") }
-    val foundWorksRegex: Regex by lazy { Regex("(?<=of )\\d+") }
+    val foundWorksRegex: Regex by lazy { Regex("\\d+(?= Works)") }
 
     val tagWithoutDigitsRegex: Regex by lazy { Regex(".* ") }
     val bookmarkerPseudo: Regex by lazy { Regex("(?<=pseuds[/])[a-zA-Z]+") }

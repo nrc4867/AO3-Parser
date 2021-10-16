@@ -9,7 +9,7 @@ import wrapper.parser.ParserRegex.resultsFoundRegex
 class SearchParser : Parser<SearchResult> {
 
     internal var resultsFoundParser =
-        { mainBody: Element -> resultsFoundRegex.getRegexFound(mainBody.getElementsByTag("h3")[0].text(), 0) }
+        { mainBody: Element -> resultsFoundRegex.getWithZeroDefault(mainBody.getFirstByTag("h3").text()) }
 
     override fun parsePage(queryResponse: String): SearchResult {
         val doc: Document = Jsoup.parse(queryResponse)
@@ -21,9 +21,9 @@ class SearchParser : Parser<SearchResult> {
         var pages = 1
         if (mainBody.getElementsByAttributeValue("role", "navigation").size > 1) {
             val navigation = mainBody.getElementsByAttributeValue("role", "navigation")[1]
-            page = navigation.getElementsByClass("current")[0].text().toInt()
-            val pageButtons = navigation.getElementsByTag("a")
-            pages = pageButtons[pageButtons.size - 2].text().toInt()
+            page = navigation.getElementsByClass("current").getOrNull(0)?.text()?.toInt() ?: Int.MAX_VALUE
+            val pageButtons = navigation.getFirstByClass("next")
+            pages = pageButtons.previousElementSibling().text().toInt()
         }
 
         val works = mainBody.getElementsByAttributeValue("role", "article").map { article -> extractWork(article) }

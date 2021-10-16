@@ -1,12 +1,18 @@
 package wrapper.parser
 
 import constants.workproperties.*
+import constants.workproperties.TagType.Companion.tagTypeMap
+import constants.workproperties.TagType.UNKNOWN
 import exception.parserexception.SearchParserException
 import model.result.work.*
 import mu.KotlinLogging
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 import util.commaSeparatedToInt
+import wrapper.parser.ParserRegex.chapterTotalRegex
+import wrapper.parser.ParserRegex.digitsRegex
+import wrapper.parser.ParserRegex.tagTypeRegex
+import wrapper.parser.ParserRegex.workIDRegex
 import wrapper.parser.Stat.*
 
 private enum class Stat {
@@ -27,42 +33,38 @@ private val logger = KotlinLogging.logger {}
 
 internal fun extractWork(article: Element): Work {
     val headerLinks =
-        extractHeaderValues(article.getElementsByTag("h4")[0].getElementsByTag("a"))
+        extractHeaderValues(article.getFirstByTag("h4").getElementsByTag("a"))
 
-    val stats = extractStats(article.getElementsByClass("stats")[0].getElementsByTag("dd"))
+    val stats = extractStats(article.getFirstByClass("stats").getElementsByTag("dd"))
 
     return Work(
-        workId = ParserRegex.workIDRegex.getRegexFound(article.attr("id"), 0),
-        restricted = article.getElementsByTag("h4")[0].getElementsByTag("img").isNotEmpty(),
-        latestChapter = stats.getOrDefault(LATEST_CHAPTER, 0) as Int,
+        workId = workIDRegex.getWithZeroDefault(article.attr("id")),
+        restricted = article.getFirstByTag("h4").getElementsByTag("img").isNotEmpty(),
+        latestChapter = stats.getOrZero(LATEST_CHAPTER),
         archiveSymbols = extractRequiredTags(
-            article.getElementsByClass("required-tags")[0].getElementsByTag("span")
+            article.getFirstByClass("required-tags").getElementsByTag("span")
         ),
         title = headerLinks.first,
         creators = headerLinks.second,
-        tags = extractTagValues(article.getElementsByClass("tag")).filter { it.tagType != TagType.UNKNOWN }
-            .toMutableList(),
-        summary = if (article.getElementsByTag("blockquote")
-                .isNotEmpty()
-        ) article.getElementsByTag("blockquote")[0].children().eachText()
-            .joinToString(separator = "\n") else "",
+        tags = extractTagValues(article.getElementsByClass("tag")),
+        summary = article.getElementsByTag("blockquote").firstOrNull()?.outerHtml() ?: "",
+        series = article.getElementsByClass("series")?.firstOrNull()?.let { extractSeries(it) } ?: emptyList(),
         language = stats.getOrDefault(LANGUAGE, Language.UNKNOWN) as Language,
         stats = Stats(
-            chapterCount = stats.getOrDefault(CHAPTER_CURRENT, 0) as Int,
-            chapterTotal = if (stats[CHAPTER_TOTAL]?.toString()
-                    ?.equals("?") == true
-            ) null else stats[CHAPTER_TOTAL]?.toString()?.toInt(),
-            wordCount = stats.getOrDefault(WORDS, 0) as Int,
-            dates = WorkSearchDateStat(DateTimeFormats.ddMMMYYYY.parse(article.getElementsByClass("dateTime")[0].text())),
-            comments = stats.getOrDefault(COMMENTS, 0) as Int,
-            kudos = stats.getOrDefault(KUDOS, 0) as Int,
-            bookmarks = stats.getOrDefault(BOOKMARKS, 0) as Int,
-            hits = stats.getOrDefault(HITS, 0) as Int,
-
+            chapterCount = stats.getOrZero(CHAPTER_CURRENT),
+            chapterTotal = if (stats[CHAPTER_TOTAL] == "?") null else stats[CHAPTER_TOTAL].toString().toInt(),
+            wordCount = stats.getOrZero(WORDS),
+            dates = WorkSearchDateStat(DateTimeFormats.ddMMMYYYY.parse(article.getFirstByClass("dateTime").text())),
+            comments = stats.getOrZero(COMMENTS),
+            kudos = stats.getOrZero(KUDOS),
+            bookmarks = stats.getOrZero(BOOKMARKS),
+            hits = stats.getOrZero(HITS)
         )
     )
 
 }
+
+private fun Map<Stat, Any?>.getOrZero(stat: Stat) = getOrDefault(stat, 0) as Int
 
 private fun extractHeaderValues(links: Elements): Pair<String, List<Creator>> {
     val title = links[0].text()
@@ -71,8 +73,8 @@ private fun extractHeaderValues(links: Elements): Pair<String, List<Creator>> {
     for (index in 1 until links.size) {
         authors.add(
             Creator(
-                authorUserName = ParserRegex.authorUserRegex.getRegexFound(links[index].attr("href"), ""),
-                authorPseudoName = ParserRegex.authorPseudoRegex.getRegexFound(links[index].attr("href"), "")
+                authorUserName = ParserRegex.authorUserRegex.getWithEmptyDefault(links[index].attr("href")),
+                authorPseudoName = ParserRegex.authorPseudoRegex.getWithEmptyDefault(links[index].attr("href"))
             )
         )
     }
@@ -80,28 +82,15 @@ private fun extractHeaderValues(links: Elements): Pair<String, List<Creator>> {
     return Pair(title, authors)
 }
 
-private fun extractTagValues(links: Elements): ArrayList<Tag> {
-    val tags = ArrayList<Tag>()
+private fun extractTagValues(links: Elements): List<Tag> =
+    links.map { Tag(it.text(), tagTypeMap.getOrDefault(tagTypeRegex.getRegexFound(getTagType(it.parent())), UNKNOWN)) }
 
-    for (link in links) {
-        tags.add(
-            Tag(
-                text = link.text(),
-                tagType = TagType.tagTypeMap.getOrDefault(
-                    ParserRegex.tagTypeRegex.getRegexFound(getTagType(link.parent())),
-                    TagType.UNKNOWN
-                )
-            )
-        )
-    }
-
-    return tags
-}
 
 private fun getTagType(tag: Element): String {
-    if (tag.tagName().equals("strong"))
-        return tag.attr("class")
-    return tag.parent().attr("class")
+    return when(tag.tagName()) {
+        "strong" -> tag.parent().attr("class")
+        else -> tag.attr("class")
+    }
 }
 
 private fun extractRequiredTags(links: Elements): ArchiveSymbols {
@@ -117,6 +106,22 @@ private fun extractRequiredTags(links: Elements): ArchiveSymbols {
     )
 }
 
+private fun extractSeries(seriesList: Element): MutableList<WorkSeries> {
+    val series = mutableListOf<WorkSeries>()
+
+    for (workSeries in seriesList.getElementsByTag("li")) {
+        val link = workSeries.getFirstByTag("a")
+        series.add(
+            WorkSeries(
+                digitsRegex.getWithZeroDefault(link.href()),
+                link.text(),
+                digitsRegex.getWithZeroDefault(workSeries.getFirstByTag("strong").text())
+            )
+        )
+    }
+
+    return series
+}
 
 private fun getFirstClass(className: String): String {
     return className.split(" ", limit = 2)[0]
@@ -131,9 +136,9 @@ private fun extractStats(links: Elements): Map<Stat, Any?> {
             "words" -> statsMap[WORDS] = link.text().commaSeparatedToInt()
             "chapters" -> {
                 statsMap[LATEST_CHAPTER] = extractLatestChapterChapter(link.getElementsByTag("a"))
-                statsMap[CHAPTER_TOTAL] = ParserRegex.chapterTotalRegex.getRegexFound(link.text().removeCommas())
+                statsMap[CHAPTER_TOTAL] = chapterTotalRegex.getRegexFound(link.text().removeCommas())
                 statsMap[CHAPTER_CURRENT] =
-                    ParserRegex.chapterCurrentRegex.getRegexFound(link.text().removeCommas(), 0)
+                    ParserRegex.chapterCurrentRegex.getWithZeroDefault(link.text().removeCommas())
             }
             "collections" -> statsMap[COLLECTIONS] = link.text().commaSeparatedToInt()
             "comments" -> statsMap[COMMENTS] = link.text().commaSeparatedToInt()
@@ -150,7 +155,7 @@ private fun extractStats(links: Elements): Map<Stat, Any?> {
 private fun String.removeCommas() = this.replace(",", "")
 
 private fun extractLatestChapterChapter(links: Elements): Int {
-    if (links.isNullOrEmpty())
+    if (links.isEmpty())
         return 0
-    return ParserRegex.chapterRegex.getRegexFound(links[0].attr("href"), 0)
+    return ParserRegex.chapterRegex.getWithZeroDefault(links[0].href())
 }

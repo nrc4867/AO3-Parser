@@ -131,6 +131,28 @@ class AO3Wrapper(
         return sortAndFilterParser.parsePage(response.receive())
     }
 
+    suspend fun sortAndFilterUserWorks(
+        user: String,
+        pseudonym: String? = null,
+        include: TagSearchQuery,
+        exclude: TagSearchQuery,
+        workSearchQuery: FilterWorkSearchQuery,
+        session: Session? = null,
+        page: Int = 1
+    ): TagSortAndFilterResult {
+        val response: HttpResponse =
+            httpClient.getWithSession(
+                locations.filter_loc(
+                    buildUserSearchQuery(
+                        user, pseudonym,
+                        include, exclude,
+                        workSearchQuery
+                    ), page
+                ), session
+            )
+        return sortAndFilterParser.parsePage(response.receive())
+    }
+
     suspend fun searchPeople(peopleQuery: PeopleQuery, session: Session? = null, page: Int = 1): List<PersonResult> {
         val response: HttpResponse = httpClient.getWithSession("", session)
         return personWrapper.parsePage(response.receive())
@@ -150,9 +172,6 @@ class AO3Wrapper(
     }
 
     suspend fun sortAndFilterCollection() {
-    }
-
-    suspend fun sortAndFilterUserWorks() {
     }
 
     suspend fun getUserSeries() {
@@ -299,7 +318,10 @@ class AO3Wrapper(
             setSession(session)
             // asks ao3 to return the jquery use to display the comments rather than the entire article
             header("X-Requested-With", "XMLHttpRequest")
-            header("Accept", "*/*;q=0.5, text/javascript, application/javascript, application/ecmascript, application/x-ecmascript")
+            header(
+                "Accept",
+                "*/*;q=0.5, text/javascript, application/javascript, application/ecmascript, application/x-ecmascript"
+            )
         }
 
     /**
