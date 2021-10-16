@@ -258,21 +258,21 @@ class ChapterParser : Parser<ChapterResult> {
         return authorNotes
     }
 
-    private fun parseAssociations(associations: Elements?): Triple<List<Creator>?, List<InspiredWork>?, List<TranslatedWork>?> {
+    private fun parseAssociations(associations: Elements?): Triple<List<String>?, List<InspiredWork>?, List<TranslatedWork>?> {
         if (associations == null) {
             return Triple(null, null, null)
         }
 
-        var createdFor: MutableList<Creator>? = null
+        var createdFor: MutableList<String>? = null
         var inspiredBy: MutableList<InspiredWork>? = null
         var translated: MutableList<TranslatedWork>? = null
 
         for (associated in associations) {
             val firstLink = associated.getFirstByTag("a")
-            val giftRegex = giftRegex.getRegexFound(firstLink.href())
-            if (giftRegex != null) {
+            val giftRegexResult = giftRegex.getRegexFound(firstLink.href())
+            if (giftRegexResult != null) {
                 if (createdFor == null) createdFor = mutableListOf()
-                createdFor.add(Creator(giftRegex, giftRegex))
+                createdFor.add(giftRegexResult)
             } else {
                 val inspiredWork = parseInspiredWork(associated)
                 if (associated.text().startsWith("Inspired")) {

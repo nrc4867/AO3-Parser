@@ -45,7 +45,8 @@ internal fun extractWork(article: Element): Work {
             article.getFirstByClass("required-tags").getElementsByTag("span")
         ),
         title = headerLinks.first,
-        creators = headerLinks.second,
+        creators = headerLinks.second.filter { it.authorPseudoName != "" },
+        createdFor = headerLinks.second.filter { it.authorPseudoName == "" }.map { it.authorUserName },
         tags = extractTagValues(article.getElementsByClass("tag")),
         summary = article.getElementsByTag("blockquote").firstOrNull()?.outerHtml() ?: "",
         series = article.getElementsByClass("series")?.firstOrNull()?.let { extractSeries(it) } ?: emptyList(),

@@ -11,6 +11,7 @@ data class Work(
     val archiveSymbols: ArchiveSymbols,
     val title: String,
     val creators: List<Creator>,
+    val createdFor: List<String>,
     val tags: List<Tag>,
     val summary: String,
     val series: List<WorkSeries>,
