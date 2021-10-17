@@ -29,9 +29,9 @@ private val logger = KotlinLogging.logger {}
 class ChapterParser : Parser<ChapterResult> {
     override fun parsePage(queryResponse: String): ChapterResult {
         val document = Jsoup.parse(queryResponse)
-        val mainBody = document.getElementById("main")
+        val mainBody = document.byIDOrThrow("main")
 
-        val workMeta = mainBody.getElementsByClass("meta").first()
+        val workMeta = mainBody.getFirstByClass("meta")
         val preface = mainBody.getElementsByClass("preface")
 
         val associations = parseAssociations(
@@ -57,7 +57,7 @@ class ChapterParser : Parser<ChapterResult> {
             inspiredBy = associations.second,
             inspiredWorks = parseInspiredWorks(mainBody.getElementById("children")?.getFirstByTag("ul")?.children()),
             translations = associations.third,
-            chapterText = mainBody.getElementsByAttributeValue("role", "article").first().outerHtml(),
+            chapterText = mainBody.getElementsByAttributeValue("role", "article").first()?.outerHtml() ?: "",
         )
     }
 
@@ -82,7 +82,7 @@ class ChapterParser : Parser<ChapterResult> {
                 "series" -> series = extractSeries(dd.children())
                 "published", "status", "words", "chapters", "comments", "kudos", "bookmarks", "hits" -> {
                 }
-                "stats" -> stats = extractStats(dd.getElementsByTag("dl").first())
+                "stats" -> stats = extractStats(dd.getFirstByTag("dl"))
                 else -> logger.warn("unknown work meta option: ${dd.className()}")
             }
         }

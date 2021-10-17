@@ -18,7 +18,7 @@ class ChapterNavigationParser: Parser<ChapterNavigationResult<FullChapterInfo>> 
 
     override fun parsePage(queryResponse: String): ChapterNavigationResult<FullChapterInfo> {
         val doc: Document = Jsoup.parse(queryResponse)
-        val mainBody = doc.getElementById("main")
+        val mainBody = doc.byIDOrThrow("main")
 
         val heading = readHeading(mainBody)
         val chapters = readChapters(mainBody)

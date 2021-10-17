@@ -19,7 +19,7 @@ class UserQueryParser<E>(private val queryParser: Parser<E>) : Parser<UserQueryR
 
     override fun parsePage(queryResponse: String): UserQueryResult<E> {
         val document = Jsoup.parse(queryResponse)
-        val dashboard = document.getElementById("dashboard")
+        val dashboard = document.byIDOrThrow("dashboard")
 
         with(parseUserDashboard(dashboard)) {
             return UserQueryResult(
@@ -54,7 +54,7 @@ class UserQueryParser<E>(private val queryParser: Parser<E>) : Parser<UserQueryR
             )
         }
 
-        return UserPseuds(pseuds, digitsRegex.getWithZeroDefault(links.last().text()))
+        return UserPseuds(pseuds, digitsRegex.getWithZeroDefault(links.last()?.text() ?: ""))
     }
 
     private fun parseUserDashboard(dashboard: Element): Map<Dashboard, Int> {

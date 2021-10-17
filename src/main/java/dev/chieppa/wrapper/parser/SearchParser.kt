@@ -13,7 +13,7 @@ class SearchParser : Parser<SearchResult> {
 
     override fun parsePage(queryResponse: String): SearchResult {
         val doc: Document = Jsoup.parse(queryResponse)
-        val mainBody = doc.getElementById("main")
+        val mainBody = doc.byIDOrThrow("main")
 
         val resultsFound: Int = resultsFoundParser(mainBody)
 
@@ -23,7 +23,7 @@ class SearchParser : Parser<SearchResult> {
             val navigation = mainBody.getElementsByAttributeValue("role", "navigation")[1]
             page = navigation.getElementsByClass("current").getOrNull(0)?.text()?.toInt() ?: Int.MAX_VALUE
             val pageButtons = navigation.getFirstByClass("next")
-            pages = pageButtons.previousElementSibling().text().toInt()
+            pages = pageButtons.previousElementSibling()?.text()?.toInt() ?: 0
         }
 
         val works = mainBody.getElementsByAttributeValue("role", "article").map { article -> extractWork(article) }

@@ -23,14 +23,10 @@ version = "2.0-SNAPSHOT"
 description = "unofficial_ao3_wrapper"
 java.sourceCompatibility = JavaVersion.VERSION_11
 
-application {
-    mainClass.set("dev.chieppa.AO3WrapperKt")
-}
-
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.0")
-    implementation("org.jsoup:jsoup:1.13.1")
+    implementation("org.jsoup:jsoup:1.14.3")
     implementation("io.github.microutils:kotlin-logging-jvm:2.0.11")
     implementation("org.slf4j:slf4j-api:1.7.31")
     implementation("org.slf4j:slf4j-simple:1.7.31")

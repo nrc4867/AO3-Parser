@@ -1,5 +1,6 @@
 package dev.chieppa.wrapper.parser
 
+import dev.chieppa.exception.parserexception.ExpectedElementByIDException
 import org.jsoup.nodes.Element
 import java.time.format.DateTimeFormatter
 
@@ -68,3 +69,6 @@ internal fun Element.href() = this.attr("href")
 internal fun Element.getFirstByTag(tagName: String) = this.getElementsByTag(tagName)[0]
 internal fun Element.getFirstByClass(className: String) = this.getElementsByClass(className)[0]
 internal fun Element.getFirstByAttribute(attrName: String) = this.getElementsByAttribute(attrName)[0]
+
+internal fun Element.byIDOrThrow(tagName: String): Element = this.getElementById(tagName) ?: throw ExpectedElementByIDException(tagName)
+//internal fun Element.byClassOrThrow(className: String): Element = this.getElementById(tagName) ?: throw ExpectedElementByIDException(tagName)

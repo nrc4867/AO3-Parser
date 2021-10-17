@@ -20,7 +20,7 @@ class BookmarkParser : Parser<BookmarkSearchResult> {
 
     override fun parsePage(queryResponse: String): BookmarkSearchResult {
         val doc: Document = Jsoup.parse(queryResponse)
-        val mainBody = doc.getElementById("main")
+        val mainBody = doc.byIDOrThrow("main")
 
         val bookmarkResults = getBookmarks(mainBody.getElementsByAttributeValue("role", "article"))
 
@@ -76,7 +76,7 @@ class BookmarkParser : Parser<BookmarkSearchResult> {
         }
         return BookmarkUserSection(
             creator = Creator(authorUserRegex.getRegexFound(creator, ""), bookmarkerPseudo.getRegexFound(creator, "")),
-            notes = userSection.getElementsByClass("notes")?.text().orEmpty(),
+            notes = userSection.getElementsByClass("notes").text().orEmpty(),
             bookmarkerTags = bookmarkerTags.orEmpty(),
             bookmarkDate = ddMMMYYYY.parse(userSection.getElementsByClass("datetime").text())
         )

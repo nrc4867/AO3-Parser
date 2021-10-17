@@ -3,6 +3,8 @@ package dev.chieppa.wrapper.parser
 import dev.chieppa.constants.workproperties.*
 import dev.chieppa.constants.workproperties.TagType.Companion.tagTypeMap
 import dev.chieppa.constants.workproperties.TagType.UNKNOWN
+import dev.chieppa.exception.parserexception.ExpectedAttributeException
+import dev.chieppa.exception.parserexception.ExpectedElementException
 import dev.chieppa.exception.parserexception.SearchParserException
 import dev.chieppa.model.result.work.*
 import dev.chieppa.util.commaSeparatedToInt
@@ -49,7 +51,7 @@ internal fun extractWork(article: Element): Work {
         createdFor = headerLinks.second.filter { it.authorPseudoName == "" }.map { it.authorUserName },
         tags = extractTagValues(article.getElementsByClass("tag")),
         summary = article.getElementsByTag("blockquote").firstOrNull()?.outerHtml() ?: "",
-        series = article.getElementsByClass("series")?.firstOrNull()?.let { extractSeries(it) } ?: emptyList(),
+        series = article.getElementsByClass("series").firstOrNull()?.let { extractSeries(it) } ?: emptyList(),
         language = stats.getOrDefault(LANGUAGE, Language.UNKNOWN) as Language,
         stats = Stats(
             chapterCount = stats.getOrZero(CHAPTER_CURRENT),
@@ -84,12 +86,23 @@ private fun extractHeaderValues(links: Elements): Pair<String, List<Creator>> {
 }
 
 private fun extractTagValues(links: Elements): List<Tag> =
-    links.map { Tag(it.text(), tagTypeMap.getOrDefault(tagTypeRegex.getRegexFound(getTagType(it.parent())), UNKNOWN)) }
+    links.map {
+        Tag(
+            it.text(),
+            tagTypeMap.getOrDefault(
+                tagTypeRegex.getRegexFound(
+                    getTagType(
+                        it.parent() ?: throw ExpectedElementException("parent", "could not get parent element")
+                    )
+                ), UNKNOWN
+            )
+        )
+    }
 
 
 private fun getTagType(tag: Element): String {
-    return when(tag.tagName()) {
-        "strong" -> tag.parent().attr("class")
+    return when (tag.tagName()) {
+        "strong" -> tag.parent()?.attr("class") ?: throw ExpectedAttributeException("class")
         else -> tag.attr("class")
     }
 }

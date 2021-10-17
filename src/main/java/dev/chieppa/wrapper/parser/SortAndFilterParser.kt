@@ -23,7 +23,7 @@ class SortAndFilterParser : Parser<TagSortAndFilterResult> {
     override fun parsePage(queryResponse: String): TagSortAndFilterResult {
 
         val doc: Document = Jsoup.parse(queryResponse)
-        val mainBody = doc.getElementById("main")
+        val mainBody = doc.byIDOrThrow("main")
 
         val searchResult = searchParser.parsePage(queryResponse)
         var startWorks = startWorkRegex.getWithZeroDefault(mainBody.getFirstByTag("h2").text())
@@ -40,13 +40,13 @@ class SortAndFilterParser : Parser<TagSortAndFilterResult> {
             searchResult,
             startWorks,
             endWorks,
-            parseRatingCount(mainBody.getElementById("include_rating_tags")),
-            parseWarningCount(mainBody.getElementById("include_archive_warning_tags")),
-            parseCategoryCount(mainBody.getElementById("include_category_tags")),
-            parseRecommendations(mainBody.getElementById("include_fandom_tags")),
-            parseRecommendations(mainBody.getElementById("include_character_tags")),
-            parseRecommendations(mainBody.getElementById("include_relationship_tags")),
-            parseRecommendations(mainBody.getElementById("include_freeform_tags"))
+            parseRatingCount(mainBody.byIDOrThrow("include_rating_tags")),
+            parseWarningCount(mainBody.byIDOrThrow("include_archive_warning_tags")),
+            parseCategoryCount(mainBody.byIDOrThrow("include_category_tags")),
+            parseRecommendations(mainBody.byIDOrThrow("include_fandom_tags")),
+            parseRecommendations(mainBody.byIDOrThrow("include_character_tags")),
+            parseRecommendations(mainBody.byIDOrThrow("include_relationship_tags")),
+            parseRecommendations(mainBody.byIDOrThrow("include_freeform_tags"))
         )
     }
 

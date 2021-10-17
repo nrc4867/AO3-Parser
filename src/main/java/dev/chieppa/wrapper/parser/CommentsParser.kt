@@ -25,8 +25,8 @@ class CommentsParser : Parser<CommentResult> {
 
     override fun parsePage(queryResponse: String): CommentResult {
 
-        var totalComments: Int = 0
-        var currentPage: Int = 1
+        var totalComments = 0
+        var currentPage = 1
         lateinit var commentTree: List<Comment>
 
 
@@ -55,7 +55,7 @@ class CommentsParser : Parser<CommentResult> {
             .replace(commentTreeReplacementForwardSlash, "/")
             .plus("</ol>")
 
-        val comments = Jsoup.parse(commentRawHTML).getElementsByTag("body").first().getElementsByTag("ol").first()
+        val comments = Jsoup.parse(commentRawHTML).getFirstByTag("body").getFirstByTag("ol")
         return parseCommentLevel(comments)
     }
 
@@ -67,7 +67,7 @@ class CommentsParser : Parser<CommentResult> {
                 val subComments: List<Comment> = listItem.nextElementSibling()?.run {
                     when {
                         this.hasAttr("role") -> emptyList()
-                        else -> parseCommentLevel(this.children().first())
+                        else -> parseCommentLevel(this.children()[0])
                     }
                 } ?: emptyList()
 
@@ -83,7 +83,7 @@ class CommentsParser : Parser<CommentResult> {
                         imageLink = listItem.getElementsByTag("img").firstOrNull()?.let { parseImage(it) },
                         chapter = byline.third,
                         datePosted = commentDate.parse(listItem.getFirstByClass("posted datetime").text()),
-                        dateEdited = listItem.getElementsByClass("edited datetime")?.firstOrNull()
+                        dateEdited = listItem.getElementsByClass("edited datetime").firstOrNull()
                             ?.let { commentDate.parse(commentEditedDateRegex.getWithEmptyDefault(it.text())) },
                         contents = listItem.getFirstByTag("blockquote").outerHtml(),
                         subComments = subComments
