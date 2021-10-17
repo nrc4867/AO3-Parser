@@ -10,7 +10,7 @@ enum class ContentWarning(val search_param: Int, val class_name: String) {
     EXTERNAL_WORK(0, "external-work"),
 
     /**
-     * There arent specific archive symbols for all the warnings, I use this as a catch all
+     * There aren't specific archive symbols for all the warnings, I use this as a catch-all
      * I believe that if this tag is used by ao3 you should be able to find a corresponding tag
      * in the additional tags section.
      * I am not implementing anything additional to specifically catch the archive warnings above.

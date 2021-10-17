@@ -226,7 +226,7 @@ class AO3Wrapper(
     }
 
     /**
-     * Get a suggested autocomplete from an ao3 feild
+     * Get a suggested autocomplete from an ao3 field
      *
      * @param field: the search to base the autocomplete on
      * @param autoCompleteField: The type of autocomplete to return
@@ -284,7 +284,7 @@ class AO3Wrapper(
      */
     suspend fun getFirstChapter(workId: Int, session: Session? = null): ChapterResult {
         val response: HttpResponse = httpClient.getWithSession(locations.first_chapter_location(workId), session)
-        if (response.status == HttpStatusCode.Found) { // multichapter work
+        if (response.status == HttpStatusCode.Found) { // multi-chapter work
             val chapterLocation: Int =
                 response.headers[HttpHeaders.Location]?.substringAfterLast('/')?.toInt()
                     ?: throw WorkDoesNotExistException(workId)
