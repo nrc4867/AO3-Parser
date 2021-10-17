@@ -19,8 +19,12 @@ val ao3_autocomplete = { action: String, term: String -> "$ao3_url/autocomplete/
 
 val ao3_chapter_navigation = { work_id: Int -> "$ao3_url/works/$work_id/navigate" }
 
-val ao3_chapter_comment_location = { chapter_id: Int, page: Int -> "$ao3_url/comments/show_comments?chapter_id=$chapter_id&page=$page"}
-val ao3_work_comment_location = { work_id: Int, page: Int -> "$ao3_url/comments/show_comments?work_id=$work_id&page=$page&view_full_work=true"}
+val ao3_chapter_comment_location =
+    { chapter_id: Int, page: Int -> "$ao3_url/comments/show_comments?chapter_id=$chapter_id&page=$page" }
+val ao3_work_comment_location =
+    { work_id: Int, page: Int -> "$ao3_url/comments/show_comments?work_id=$work_id&page=$page&view_full_work=true" }
+
+val ao3_user_gift_location = { user: String, page: Int -> "$ao3_url/users/$user/gifts?page=1" }
 
 const val ao3_session_cookie = "_otwarchive_session"
 const val ao3_session_remember_user_token = "remember_user_token"

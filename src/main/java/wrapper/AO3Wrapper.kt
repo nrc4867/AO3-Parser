@@ -16,10 +16,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.core.*
 import model.Session
-import model.result.AutoCompleteResult
-import model.result.CommentResult
-import model.result.PersonResult
-import model.result.SearchResult
+import model.result.*
 import model.result.bookmark.BookmarkSearchResult
 import model.result.chapter.ChapterNavigationResult
 import model.result.chapter.ChapterResult
@@ -87,6 +84,11 @@ class AO3Wrapper(
     var commentsParser = CommentsParser()
 
     /**
+     * Parser for user works
+     */
+    var userWorksParser = UserQueryParser(sortAndFilterParser)
+
+    /**
      * Perform a search
      *
      * @param workSearchQuery: a query
@@ -139,7 +141,7 @@ class AO3Wrapper(
         workSearchQuery: FilterWorkSearchQuery,
         session: Session? = null,
         page: Int = 1
-    ): TagSortAndFilterResult {
+    ): UserQueryResult<TagSortAndFilterResult> {
         val response: HttpResponse =
             httpClient.getWithSession(
                 locations.filter_loc(
@@ -150,7 +152,7 @@ class AO3Wrapper(
                     ), page
                 ), session
             )
-        return sortAndFilterParser.parsePage(response.receive())
+        return userWorksParser.parsePage(response.receive())
     }
 
     suspend fun searchPeople(peopleQuery: PeopleQuery, session: Session? = null, page: Int = 1): List<PersonResult> {
@@ -180,7 +182,9 @@ class AO3Wrapper(
     suspend fun getUserCollections() {
     }
 
-    suspend fun getUserGifts() {
+    suspend fun getUserGifts(user: String, page: Int = 1, session: Session? = null) {
+        val response: HttpResponse = httpClient.getWithSession(locations.user_gift_location(user, page), session)
+
     }
 
     suspend fun getUserProfile() {

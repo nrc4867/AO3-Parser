@@ -13,4 +13,5 @@ data class LinkLocations(
     val bookmark_location: (query: String, page: Int) -> String = ao3_bookmark_search,
     val chapter_comment_location: (chapter_id: Int, page: Int) -> String = ao3_chapter_comment_location,
     val work_comment_location: (work_id: Int, page: Int) -> String = ao3_work_comment_location,
+    val user_gift_location: (username: String, page: Int) -> String = ao3_user_gift_location
 )

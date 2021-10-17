@@ -42,6 +42,8 @@ internal object ParserRegex {
     val commentTreeReplacementSingleQuote: Regex by lazy { Regex("\\\\\'") }
     val commentTreeReplacementNewLine: Regex by lazy { Regex("\\\\n") }
     val commentTreeReplacementForwardSlash: Regex by lazy { Regex("\\\\/") }
+
+    val userDashboardRegex: Regex by lazy { Regex(".+(?= \\()") }
 }
 
 internal object DateTimeFormats {
