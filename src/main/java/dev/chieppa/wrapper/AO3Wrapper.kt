@@ -89,6 +89,11 @@ class AO3Wrapper(
     var userWorksParser = UserQueryParser(sortAndFilterParser)
 
     /**
+     * Parser for user gifts
+     */
+    var userGiftParser = UserQueryParser(GiftsParser())
+
+    /**
      * Perform a search
      *
      * @param workSearchQuery: a query
@@ -182,9 +187,15 @@ class AO3Wrapper(
     suspend fun getUserCollections() {
     }
 
-    suspend fun getUserGifts(user: String, page: Int = 1, session: Session? = null) {
+    /**
+     * Get the gifts given to this user.
+     * @param user: The username of the account. pseudonym is not available for this query
+     * @param page: the page of the query
+     * @param session: A session that has the permissions to view the works given to this user.
+     */
+    suspend fun getUserGifts(user: String, page: Int = 1, session: Session? = null): UserQueryResult<GiftsResult> {
         val response: HttpResponse = httpClient.getWithSession(locations.user_gift_location(user, page), session)
-
+        return userGiftParser.parsePage(response.receive())
     }
 
     suspend fun getUserProfile() {
