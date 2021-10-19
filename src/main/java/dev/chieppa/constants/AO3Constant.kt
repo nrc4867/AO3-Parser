@@ -24,7 +24,9 @@ val ao3_chapter_comment_location =
 val ao3_work_comment_location =
     { work_id: Int, page: Int -> "$ao3_url/comments/show_comments?work_id=$work_id&page=$page&view_full_work=true" }
 
-val ao3_user_gift_location = { user: String, page: Int -> "$ao3_url/users/$user/gifts?page=$page" }
+val ao3_user_location = { user: String -> "$ao3_url/users/$user" }
+val ao3_user_profile_location = { user: String -> "${ao3_user_location(user)}/profile" }
+val ao3_user_gift_location = { user: String, page: Int -> "${ao3_user_location(user)}/gifts?page=$page" }
 
 const val ao3_session_cookie = "_otwarchive_session"
 const val ao3_session_remember_user_token = "remember_user_token"

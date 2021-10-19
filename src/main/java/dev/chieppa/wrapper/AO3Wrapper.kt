@@ -94,6 +94,11 @@ class AO3Wrapper(
     var userGiftParser = UserQueryParser(GiftsParser())
 
     /**
+     * Parser for user profile
+     */
+    var userProfileParser = UserQueryParser(ProfileParser())
+
+    /**
      * Perform a search
      *
      * @param workSearchQuery: a query
@@ -198,7 +203,9 @@ class AO3Wrapper(
         return userGiftParser.parsePage(response.receive())
     }
 
-    suspend fun getUserProfile() {
+    suspend fun getUserProfile(user: String, session: Session? = null): UserQueryResult<UserProfileResult> {
+        val response: HttpResponse = httpClient.getWithSession(locations.user_profile_location(user), session)
+        return userProfileParser.parsePage(response.receive())
     }
 
     suspend fun getUserDashboard() {
