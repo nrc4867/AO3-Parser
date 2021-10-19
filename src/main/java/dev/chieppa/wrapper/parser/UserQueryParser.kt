@@ -63,7 +63,7 @@ class UserQueryParser<E>(private val queryParser: Parser<E>) : Parser<UserQueryR
         fun Element.setMapKey(key: Dashboard) = dashboardMap.put(key, digitsRegex.getWithZeroDefault(this.text()))
 
         val links =
-            dashboard.getElementsByTag("ul").apply { subList(1, this.size) }.flatMap { it.getElementsByTag("a") }
+            dashboard.getElementsByTag("ul").apply { subList(1, this.size) }.flatMap { it.getElementsByTag("li") }
         for (link in links) {
             with(link) {
                 when (userDashboardRegex.getWithEmptyDefault(link.text())) {
@@ -77,7 +77,7 @@ class UserQueryParser<E>(private val queryParser: Parser<E>) : Parser<UserQueryR
                     "Assignments" -> setMapKey(ASSIGNMENTS)
                     "Claims" -> setMapKey(CLAIMS)
                     "Related Works" -> setMapKey(RELATED_WORKS)
-                    "GIFTS" -> setMapKey(GIFTS)
+                    "Gifts" -> setMapKey(GIFTS)
                     else -> {
                     }
                 }
