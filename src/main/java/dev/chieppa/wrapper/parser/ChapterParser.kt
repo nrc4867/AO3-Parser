@@ -34,13 +34,14 @@ class ChapterParser : Parser<ChapterResult> {
         val workMeta = mainBody.getFirstByClass("meta")
         val preface = mainBody.getElementsByClass("preface")
 
-        val associations = parseAssociations(
+        val (createdFor, inspiredBy, translated) = parseAssociations(
             mainBody.getElementsByClass("associations").firstOrNull()?.children()
         )
 
         return ChapterResult(
             workMeta = parseWorkMeta(workMeta),
             restricted = mainBody.getElementsByAttributeValue("title", "Restricted").size > 0,
+            commentsRestricted = mainBody.byIDOrThrow("feedback").getElementsByClass("notice").size > 0,
             chapterNavigationResult = parseNavigation(
                 preface[0],
                 mainBody.getFirstByClass("download").getFirstByTag("ul").getFirstByTag("a"),
@@ -53,10 +54,10 @@ class ChapterParser : Parser<ChapterResult> {
                 mainBody.getElementById("selected_id")?.getElementsByAttribute("selected")?.getOrNull(0)
             ),
             authorNotes = parseAuthorNotes(mainBody),
-            createdFor = associations.first,
-            inspiredBy = associations.second,
+            createdFor = createdFor,
+            inspiredBy = inspiredBy,
             inspiredWorks = parseInspiredWorks(mainBody.getElementById("children")?.getFirstByTag("ul")?.children()),
-            translations = associations.third,
+            translations = translated,
             chapterText = mainBody.getElementsByAttributeValue("role", "article").first()?.outerHtml() ?: "",
         )
     }

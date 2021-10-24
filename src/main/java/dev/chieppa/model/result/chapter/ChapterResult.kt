@@ -6,6 +6,7 @@ import java.io.Serializable
 data class ChapterResult(
     val workMeta: WorkMeta,
     val restricted: Boolean,
+    val commentsRestricted: Boolean,
     val chapterNavigationResult: ChapterNavigationResult<BasicChapterInfo>,
     val chapterPosition: Int?, // zero indexed
     val chapterId: Int?,
