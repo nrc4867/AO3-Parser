@@ -43,7 +43,7 @@ data class WorkSearchQuery(
             single_chapter?.let { appendParameter(header, SINGLE_CHAPTER, it.search_param.toString()) }
             wordCount?.let { appendParameter(header, WORD_COUNT, it) }
             language?.let { appendParameter(header, LANGUAGE, it.search_param) }
-            fandoms?.let { appendParameter(header, FANDOM, it.joinToString(",")) }
+            fandoms?.let { appendParameter(header, FANDOM_NAMES, it.joinToString(",")) }
             rating?.let { appendParameter(header, RATING, it.search_param.toString()) }
             characters?.let { appendParameter(header, CHARACTER_NAME, it.joinToString(",")) }
             relationships?.let { appendParameter(header, RELATIONSHIP_NAMES, it.joinToString(",")) }

@@ -2,20 +2,24 @@ package dev.chieppa.wrapper.parser
 
 import dev.chieppa.exception.parserexception.ExpectedElementByIDException
 import org.jsoup.nodes.Element
+import java.net.URLDecoder
+import java.nio.charset.Charset
 import java.time.format.DateTimeFormatter
 
 internal object ParserRegex {
     val digitsRegex: Regex by lazy { Regex("\\d+") }
     val firstWordRegex: Regex by lazy { Regex("^([\\w\\-]+)") }
+    val alphaRegex: Regex by lazy { Regex("[a-zA-Z]+") }
+    val externalLinkRegex: Regex by lazy { Regex("https://.*") }
 
     val resultsFoundRegex: Regex by lazy { digitsRegex }
     val workIDRegex: Regex by lazy { digitsRegex }
-    val authorUserRegex: Regex by lazy { Regex("(?<=/users/)[a-zA-Z]+") }
+    val authorUserRegex: Regex by lazy { Regex("(?<=/users/)[a-zA-Z_]+") }
     val authorPseudoRegex: Regex by lazy { Regex("(?<=pseuds[/])(.*)") }
     val chapterRegex: Regex by lazy { Regex("(?<=chapters[/])(.*)") }
     val chapterTotalRegex: Regex by lazy { Regex("(?<=\\d[/])(.*)") }
     val chapterCurrentRegex: Regex by lazy { Regex("\\d+") }
-    val tagTypeRegex: Regex by lazy { Regex("[a-zA-Z]+") }
+    val tagTypeRegex: Regex by lazy { alphaRegex }
 
     val chapterIdRegex: Regex by lazy { Regex("(?<=/chapters/)[\\d]+") }
     val chapterNumberRegex: Regex by lazy { digitsRegex }
@@ -27,6 +31,10 @@ internal object ParserRegex {
 
     val tagWithoutDigitsRegex: Regex by lazy { Regex(".* ") }
     val bookmarkerPseudo: Regex by lazy { Regex("(?<=pseuds[/])[a-zA-Z]+") }
+
+    val personAttributeRegex: Regex by lazy { Regex("(bookmark)|(work in)|(works in)|(work)") }
+    val workInRegex: Regex by lazy { Regex("(?<=in ).*") }
+    val fandomIDRegex: Regex by lazy { Regex("(?<=fandom_id=)\\d+") }
 
     val collectionRegex: Regex by lazy { Regex("(?<=/collections/)\\w+") }
 
@@ -64,7 +72,7 @@ internal fun Regex.getWithEmptyDefault(text: String) = getRegexFound(text, "")
 
 internal fun Element.flattenedHtml() = this.outerHtml().trim().replace("\n", "")
 
-internal fun Element.href() = this.attr("href")
+internal fun Element.href() = URLDecoder.decode(this.attr("href"), Charset.defaultCharset())
 
 internal fun Element.getFirstByTag(tagName: String) = this.getElementsByTag(tagName)[0]
 internal fun Element.getFirstByClass(className: String) = this.getElementsByClass(className)[0]

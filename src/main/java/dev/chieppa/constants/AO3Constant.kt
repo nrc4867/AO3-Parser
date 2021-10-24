@@ -8,6 +8,10 @@ val ao3_search = { query: String, page: Int -> "$ao3_url/works/search?$query&pag
 val ao3_bookmark_search =
     { query: String, page: Int -> "$ao3_url/bookmarks/search?$query&page=$page" }
 
+val ao3_people_search = {
+    query: String, page: Int -> "$ao3_url/people/search?$query&page=$page"
+}
+
 val ao3_sort_and_filter = { filter: String, page: Int -> "$ao3_url/works?$filter&page=$page" }
 
 val ao3_chapter = { chapter_id: Int -> "$ao3_url/chapters/$chapter_id" }

@@ -165,8 +165,9 @@ class AO3Wrapper(
         return userWorksParser.parsePage(response.receive())
     }
 
-    suspend fun searchPeople(peopleQuery: PeopleQuery, session: Session? = null, page: Int = 1): List<PersonResult> {
-        val response: HttpResponse = httpClient.getWithSession("", session)
+    suspend fun searchPeople(peopleQuery: PeopleQuery, session: Session? = null, page: Int = 1): PeopleResult {
+        val response: HttpResponse =
+            httpClient.getWithSession(locations.people_location(peopleSearch(peopleQuery), page), session)
         return personWrapper.parsePage(response.receive())
     }
 
