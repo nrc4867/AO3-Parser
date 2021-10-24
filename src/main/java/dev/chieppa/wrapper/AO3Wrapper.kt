@@ -32,9 +32,13 @@ import mu.KotlinLogging
 import java.net.HttpCookie
 
 class AO3Wrapper(
-    private val httpClient: HttpClient = HttpClient { ao3HttpClientConfig("generic-ao3-wrapper") },
+    private var httpClient: HttpClient = HttpClient { ao3HttpClientConfig("generic-ao3-wrapper") },
     private val locations: LinkLocations = LinkLocations()
 ) : Closeable {
+
+    constructor(userAgent: String) : this() {
+        httpClient = HttpClient { ao3HttpClientConfig(userAgent) }
+    }
 
     private val logger = KotlinLogging.logger { }
 
