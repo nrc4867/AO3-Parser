@@ -9,9 +9,9 @@ class GiftsParser: Parser<GiftsResult> {
         val document = Jsoup.parse(queryResponse)
         val mainBody = document.byIDOrThrow("main")
 
-        val pageInfo = extractPage(mainBody.getElementsByAttributeValue("role", "navigation").getOrNull(1))
+        val navigation = extractPage(mainBody.getElementsByAttributeValue("role", "navigation").getOrNull(1))
 
-        return GiftsResult(pageInfo.second, pageInfo.first, mainBody.getElementsByAttributeValue("role", "article").map { extractWork(it) })
+        return GiftsResult(navigation, mainBody.getElementsByAttributeValue("role", "article").map { extractWork(it) })
     }
 
 }

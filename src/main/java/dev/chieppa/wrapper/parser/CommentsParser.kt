@@ -2,6 +2,7 @@ package dev.chieppa.wrapper.parser
 
 import dev.chieppa.model.result.CommentResult
 import dev.chieppa.model.result.comment.Comment
+import dev.chieppa.model.result.navigation.Navigation
 import dev.chieppa.model.result.work.Creator
 import dev.chieppa.wrapper.parser.DateTimeFormats.commentDate
 import dev.chieppa.wrapper.parser.ParserRegex.authorUserRegex
@@ -16,35 +17,41 @@ import dev.chieppa.wrapper.parser.ParserRegex.currentPageRegex
 import dev.chieppa.wrapper.parser.ParserRegex.digitsRegex
 import dev.chieppa.wrapper.parser.ParserRegex.firstWordRegex
 import dev.chieppa.wrapper.parser.ParserRegex.totalCommentsRegex
+import dev.chieppa.wrapper.parser.ParserRegex.totalPagesRegex
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 
 class CommentsParser : Parser<CommentResult> {
 
     private val defaultImage = "/images/skins/iconsets/default/icon_user.png"
+    private val minimumCommentsForPages = 20
 
     override fun parsePage(queryResponse: String): CommentResult {
 
         var totalComments = 0
-        var currentPage = 1
+        var navigation: Navigation = Navigation(1,1)
         lateinit var commentTree: List<Comment>
 
 
         for ((line, text) in queryResponse.lines().withIndex()) {
             when (line) {
                 3 -> totalComments = parseCommentTotal(text)
-                5 -> currentPage = parseCurrentPage(text)
+                5 -> {
+                    if (totalComments < minimumCommentsForPages) continue
+                    navigation = Navigation(parseCurrentPage(text), parseTotalPages(text))
+                }
                 6 -> commentTree = parseCommentTree(text)
             }
         }
 
-        return CommentResult(totalComments, currentPage, commentTree)
+        return CommentResult(totalComments, navigation, commentTree)
 
     }
 
     private fun parseCommentTotal(text: String): Int = totalCommentsRegex.getWithZeroDefault(text)
 
-    private fun parseCurrentPage(text: String): Int = currentPageRegex.getWithZeroDefault(text)
+    private fun parseCurrentPage(text: String): Int = currentPageRegex.getRegexFound(text, 1)
+    private fun parseTotalPages(text: String): Int = totalPagesRegex.getRegexFound(text, 1)
 
     private fun parseCommentTree(text: String): List<Comment> {
         val commentRawHTML = commentTreeRegex

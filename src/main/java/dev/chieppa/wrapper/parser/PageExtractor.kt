@@ -1,11 +1,12 @@
 package dev.chieppa.wrapper.parser
 
+import dev.chieppa.model.result.navigation.Navigation
 import org.jsoup.nodes.Element
 
 /**
  * @return Pair<Page, Pages>
  */
-fun extractPage(navigation: Element?): Pair<Int, Int> {
+fun extractPage(navigation: Element?): Navigation {
     var page = 1
     var pages = 1
 
@@ -15,5 +16,5 @@ fun extractPage(navigation: Element?): Pair<Int, Int> {
         pages = pageButtons.previousElementSibling()?.text()?.toInt() ?: 0
     }
 
-    return Pair(page, pages)
+    return Navigation(page, pages)
 }

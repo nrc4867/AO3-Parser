@@ -17,10 +17,10 @@ class SearchParser : Parser<SearchResult> {
 
         val resultsFound: Int = resultsFoundParser(mainBody)
 
-        val pageInfo = extractPage(mainBody.getElementsByAttributeValue("role", "navigation").getOrNull(1))
+        val navigation = extractPage(mainBody.getElementsByAttributeValue("role", "navigation").getOrNull(1))
 
         val works = mainBody.getElementsByAttributeValue("role", "article").map { article -> extractWork(article) }
-        return SearchResult(resultsFound, pageInfo.second, pageInfo.first, works)
+        return SearchResult(resultsFound, navigation, works)
     }
 
 }

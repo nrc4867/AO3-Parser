@@ -242,7 +242,7 @@ class AO3Wrapper(
                 session, currentPage
             )
             works.addAll(result.works)
-            endPage = result.pages
+            endPage = result.navigation.pages
             currentPage++
         } while (currentPage < endPage)
         return works

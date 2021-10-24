@@ -19,12 +19,11 @@ class PersonParser : Parser<PeopleResult> {
         val document = Jsoup.parse(queryResponse)
         val main = document.byIDOrThrow("main")
 
-        val (page, pages) = extractPage(main.getElementsByAttributeValue("role", "navigation")[1])
+        val navigation = extractPage(main.getElementsByAttributeValue("role", "navigation")[1])
 
         return PeopleResult(
             found = digitsRegex.getWithZeroDefault(main.getFirstByTag("strong").text()),
-            pages = pages,
-            page = page,
+            navigation = navigation,
             people = parsePeople(main.getElementsByAttributeValue("role", "article"))
         )
 

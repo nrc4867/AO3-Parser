@@ -43,6 +43,7 @@ internal object ParserRegex {
 
     val totalCommentsRegex: Regex by lazy { Regex("(?<=Hide Comments \\()[1-9]*(?=\\).*)") }
     val currentPageRegex: Regex by lazy { Regex("(?<=<span class=\\\\\"current\\\\\">)[1-9]*(?=<\\\\/span>.*)") }
+    val totalPagesRegex: Regex by lazy { Regex("(?<=>)\\d+(?=((<\\\\/a>)|(<\\\\/span>))<\\\\/li> <li class=\\\\\"next\\\\\")") }
     val commentTreeRegex: Regex by lazy { Regex("(?<=\\.append\\(\").*(?=\\);)") }
 
     val commentEditedDateRegex: Regex by lazy { Regex("(?<=Last Edited ).*") }
