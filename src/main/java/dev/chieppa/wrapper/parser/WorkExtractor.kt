@@ -55,7 +55,7 @@ internal fun extractWork(article: Element): Work {
         language = stats.getOrDefault(LANGUAGE, Language.UNKNOWN) as Language,
         stats = Stats(
             chapterCount = stats.getOrZero(CHAPTER_CURRENT),
-            chapterTotal = if (stats[CHAPTER_TOTAL] == "?") null else stats[CHAPTER_TOTAL].toString().toInt(),
+            chapterTotal = if (stats.getOrDefault(CHAPTER_TOTAL, "?") == "?") null else stats[CHAPTER_TOTAL].toString().toInt(),
             wordCount = stats.getOrZero(WORDS),
             dates = WorkSearchDateStat(DateTimeFormats.ddMMMYYYY.parse(article.getFirstByClass("dateTime").text())),
             comments = stats.getOrZero(COMMENTS),

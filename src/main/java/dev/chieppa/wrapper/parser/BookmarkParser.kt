@@ -26,9 +26,9 @@ class BookmarkParser : Parser<BookmarkSearchResult> {
 
         val foundPages =
             digitsRegex.getRegexFound(mainBody.getElementsByClass("heading").getOrNull(2)?.text().orEmpty(), 0)
-        val parsedPages = getPages(mainBody.getElementsByClass("pagination").getOrNull(0))
+        val navigation = extractPage(mainBody.getElementsByClass("pagination").getOrNull(0))
 
-        return BookmarkSearchResult(bookmarkResults, foundPages, parsedPages.first, parsedPages.second)
+        return BookmarkSearchResult(bookmarkResults, foundPages, navigation)
 
     }
 
