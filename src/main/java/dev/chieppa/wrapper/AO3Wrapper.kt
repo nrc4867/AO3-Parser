@@ -271,7 +271,7 @@ class AO3Wrapper(
      * @return ChapterQueryResult containing the requested information
      */
     suspend fun getChapters(work: Work, session: Session? = null): ChapterNavigationResult<FullChapterInfo> {
-        return getChapters(work.workId, session)
+        return getChapters(work.articleID, session)
     }
 
     /**
@@ -434,7 +434,7 @@ class AO3Wrapper(
     }
 
     private fun createSearchStringForWorks(works: List<Work>): String {
-        return createIDSearchString(works.map { work -> work.workId })
+        return createIDSearchString(works.map { work -> work.articleID })
     }
 
     private fun createIDSearchString(workIds: List<Int>): String {

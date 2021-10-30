@@ -12,6 +12,7 @@ internal object ParserRegex {
     val alphaRegex: Regex by lazy { Regex("[a-zA-Z]+") }
     val externalLinkRegex: Regex by lazy { Regex("https://.*") }
 
+    val articleTypeRegex: Regex by lazy { Regex("(?<=/).*(?=/\\d)") }
     val resultsFoundRegex: Regex by lazy { digitsRegex }
     val workIDRegex: Regex by lazy { digitsRegex }
     val authorUserRegex: Regex by lazy { Regex("(?<=/users/)[a-zA-Z_]+") }

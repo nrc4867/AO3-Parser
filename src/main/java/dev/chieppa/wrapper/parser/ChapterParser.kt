@@ -66,8 +66,8 @@ class ChapterParser : Parser<ChapterResult> {
         val tags = mutableListOf<Tag>()
         lateinit var language: Language
         var collection: List<WorkCollection> = listOf()
-        var series: List<WorkMetaSeries> = listOf()
-        lateinit var stats: Stats<WorkMetaDateStat>
+        var series: List<WorkMetaAssociatedSeries> = listOf()
+        lateinit var workStats: WorkStats<WorkMetaDateStat>
 
         val definiteDescriptions = workMeta.getElementsByTag("dd")
         for (dd in definiteDescriptions) {
@@ -83,7 +83,7 @@ class ChapterParser : Parser<ChapterResult> {
                 "series" -> series = extractSeries(dd.children())
                 "published", "status", "words", "chapters", "comments", "kudos", "bookmarks", "hits" -> {
                 }
-                "stats" -> stats = extractStats(dd.getFirstByTag("dl"))
+                "stats" -> workStats = extractStats(dd.getFirstByTag("dl"))
                 else -> logger.warn("unknown work meta option: ${dd.className()}")
             }
         }
@@ -93,7 +93,7 @@ class ChapterParser : Parser<ChapterResult> {
             language = language,
             collection = collection,
             series = series,
-            stats = stats
+            workStats = workStats
         )
 
     }
@@ -116,7 +116,7 @@ class ChapterParser : Parser<ChapterResult> {
         return workCollections
     }
 
-    private fun extractStats(stats: Element): Stats<WorkMetaDateStat> {
+    private fun extractStats(stats: Element): WorkStats<WorkMetaDateStat> {
         var chapterCount = 0
         var chapterTotal: Int? = null
         var wordCount = 0
@@ -152,7 +152,7 @@ class ChapterParser : Parser<ChapterResult> {
                 true
             }
 
-        return Stats(
+        return WorkStats(
             chapterCount = chapterCount,
             chapterTotal = chapterTotal,
             wordCount = wordCount,
@@ -164,11 +164,11 @@ class ChapterParser : Parser<ChapterResult> {
         )
     }
 
-    private fun extractSeries(series: Elements): List<WorkMetaSeries> {
-        val seriesCollection = mutableListOf<WorkMetaSeries>()
+    private fun extractSeries(series: Elements): List<WorkMetaAssociatedSeries> {
+        val seriesCollection = mutableListOf<WorkMetaAssociatedSeries>()
         for (volume in series) {
             seriesCollection.add(
-                WorkMetaSeries(
+                WorkMetaAssociatedSeries(
                     digitsRegex.getWithZeroDefault(volume.getFirstByTag("a").href()),
                     volume.getFirstByTag("a").text(),
                     digitsRegex.getRegexFound(volume.getFirstByClass("position").text(), 1),

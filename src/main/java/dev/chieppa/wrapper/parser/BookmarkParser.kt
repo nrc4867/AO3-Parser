@@ -5,8 +5,8 @@ import dev.chieppa.constants.workproperties.parseBookmarkType
 import dev.chieppa.model.result.bookmark.BookmarkResult
 import dev.chieppa.model.result.bookmark.BookmarkSearchResult
 import dev.chieppa.model.result.bookmark.BookmarkUserSection
+import dev.chieppa.model.result.work.ArticleResult
 import dev.chieppa.model.result.work.Creator
-import dev.chieppa.model.result.work.Work
 import dev.chieppa.wrapper.parser.DateTimeFormats.ddMMMYYYY
 import dev.chieppa.wrapper.parser.ParserRegex.authorUserRegex
 import dev.chieppa.wrapper.parser.ParserRegex.bookmarkerPseudo
@@ -46,12 +46,12 @@ class BookmarkParser : Parser<BookmarkSearchResult> {
         return bookmarkResults
     }
 
-    private fun parseWork(article: Element): Work? {
+    private fun parseWork(article: Element): ArticleResult? {
         if (article.getElementsByClass("message").isNotEmpty()) {
             return null
         }
 
-        return extractWork(article)
+        return articleExtractor(article)
     }
 
     private fun parseBookmarkSymbol(article: Element): BookmarkType? {
