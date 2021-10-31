@@ -74,7 +74,8 @@ class ChapterParser : Parser<ChapterResult> {
             when (dd.className()) {
                 "rating tags" -> tags.addAll(dd.extractTags(RATING))
                 "warning tags" -> tags.addAll(dd.extractTags(WARNING))
-                "category tags" -> tags.addAll(dd.extractTags(RELATIONSHIP))
+                "category tags" -> tags.addAll(dd.extractTags(CATEGORY))
+                "relationship tags" -> tags.addAll(dd.extractTags(RELATIONSHIP))
                 "fandom tags" -> tags.addAll(dd.extractTags(FANDOMS))
                 "freeform tags" -> tags.addAll(dd.extractTags(FREEFORM))
                 "character tags" -> tags.addAll(dd.extractTags(CHARACTER))

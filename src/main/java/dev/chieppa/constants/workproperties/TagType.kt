@@ -3,6 +3,7 @@ package dev.chieppa.constants.workproperties
 enum class TagType(val tagType: String) {
     FANDOMS("fandoms"),
     WARNING("warnings"),
+    CATEGORY("category"),
     RELATIONSHIP("relationships"),
     CHARACTER("characters"),
     FREEFORM("freeforms"),
