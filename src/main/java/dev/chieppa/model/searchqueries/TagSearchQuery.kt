@@ -104,3 +104,15 @@ fun buildUserSearchQuery(
     pseudonym?.let { searchString.append("&pseud_id=${it.encode()}") }
     return searchString.toString()
 }
+
+fun buildUserBookmarkSearchQuery(
+    user: String,
+    pseudonym: String?,
+    bookmarkQuery: BookmarkQuery
+): String {
+    val searchString = StringBuilder()
+    bookmarkQuery.bookmarkQuery(searchString)
+    searchString.append("&user_id=${user.encode()}")
+    pseudonym?.let { searchString.append("&pseud_id=${it.encode()}") }
+    return searchString.toString()
+}

@@ -312,7 +312,7 @@ class ChapterParser : Parser<ChapterResult> {
     private fun parseInspiredWork(work: Element): InspiredWork {
         val authors = mutableListOf<Creator>()
 
-        for (author in work.getElementsByTag("a").filter { it.hasAttr("rel") }) {
+        for (author in work.getElementsByTag("a").filter { element -> element.hasAttr("rel") }) {
             authors.add(
                 Creator(
                     authorUserRegex.getWithEmptyDefault(author.href()),

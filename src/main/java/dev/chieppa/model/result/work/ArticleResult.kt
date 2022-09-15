@@ -28,7 +28,15 @@ data class Work(
     val language: Language,
     val collections: Int,
     override val stats: WorkStats<WorkSearchDateStat>
-) : ArticleResult, Serializable
+) : ArticleResult, Serializable {
+    override fun hashCode(): Int {
+        return articleID
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return (other as Work).articleID == articleID
+    }
+}
 
 @kotlinx.serialization.Serializable
 data class ExternalWork(

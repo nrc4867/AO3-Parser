@@ -2,8 +2,8 @@ package dev.chieppa.wrapper.parser
 
 import dev.chieppa.constants.workproperties.BookmarkType
 import dev.chieppa.constants.workproperties.parseBookmarkType
+import dev.chieppa.model.result.BookmarkSearchResult
 import dev.chieppa.model.result.bookmark.BookmarkResult
-import dev.chieppa.model.result.bookmark.BookmarkSearchResult
 import dev.chieppa.model.result.bookmark.BookmarkUserSection
 import dev.chieppa.model.result.work.ArticleResult
 import dev.chieppa.model.result.work.Creator
@@ -51,7 +51,7 @@ class BookmarkParser : Parser<BookmarkSearchResult> {
             return null
         }
 
-        return articleExtractor(article)
+        return extractArticle(article)
     }
 
     private fun parseBookmarkSymbol(article: Element): BookmarkType? {

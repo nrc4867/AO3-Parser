@@ -15,6 +15,7 @@ data class LinkLocations(
     val chapter_comment_location: (chapter_id: Int, page: Int) -> String = ao3_chapter_comment_location,
     val work_comment_location: (work_id: Int, page: Int) -> String = ao3_work_comment_location,
     val user_location: (username: String) -> String = ao3_user_location,
+    val filter_loc_bookmarks: (filter: String, page: Int) -> String = ao3_sort_and_filter_bookmarks,
     val user_profile_location: (username: String) -> String = ao3_user_profile_location,
     val user_gift_location: (username: String, page: Int) -> String = ao3_user_gift_location
 )

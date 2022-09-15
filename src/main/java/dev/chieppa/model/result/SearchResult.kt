@@ -1,8 +1,13 @@
 package dev.chieppa.model.result
 
 import dev.chieppa.model.result.navigation.Navigation
-import dev.chieppa.model.result.work.Work
+import dev.chieppa.model.result.work.ArticleResult
+import java.io.Serializable
 
-data class SearchResult(val found: Int,
-                        val navigation: Navigation,
-                        val works: List<Work>)
+
+@kotlinx.serialization.Serializable
+data class SearchResult<E : ArticleResult>(
+    val found: Int,
+    val navigation: Navigation,
+    val articles: List<E>
+): Serializable

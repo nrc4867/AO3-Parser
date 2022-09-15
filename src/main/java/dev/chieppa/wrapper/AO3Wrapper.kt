@@ -10,10 +10,10 @@ import dev.chieppa.exception.queryexception.ChapterDoesNotExistException
 import dev.chieppa.exception.queryexception.WorkDoesNotExistException
 import dev.chieppa.model.Session
 import dev.chieppa.model.result.*
-import dev.chieppa.model.result.bookmark.BookmarkSearchResult
 import dev.chieppa.model.result.chapter.ChapterNavigationResult
 import dev.chieppa.model.result.chapter.ChapterResult
 import dev.chieppa.model.result.chapter.FullChapterInfo
+import dev.chieppa.model.result.filterSidebar.BookmarkSortAndFilterResult
 import dev.chieppa.model.result.filterSidebar.TagSortAndFilterResult
 import dev.chieppa.model.result.work.Work
 import dev.chieppa.model.searchqueries.*
@@ -23,7 +23,7 @@ import dev.chieppa.util.setCookie
 import dev.chieppa.wrapper.parser.*
 import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.features.*
+import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -45,12 +45,12 @@ class AO3Wrapper(
     /**
      * parser for the search results
      */
-    var searchParser = SearchParser()
+    var searchParser = SearchParser<Work>()
 
     /**
      * parser for the filtered results
      */
-    var sortAndFilterParser = SortAndFilterParser()
+    var sortAndFilterParser = SortAndFilterParser<Work>()
 
     /**
      * parser for work chapter navigator
@@ -93,6 +93,11 @@ class AO3Wrapper(
     var userWorksParser = UserQueryParser(sortAndFilterParser)
 
     /**
+     * Parser for user bookmarks page
+     */
+    var userBookmarkParser = UserQueryParser(UserBookmarkParser(bookmarkParser))
+
+    /**
      * Parser for user gifts
      */
     var userGiftParser = UserQueryParser(GiftsParser())
@@ -109,10 +114,10 @@ class AO3Wrapper(
      * @param session: a session that has permission to view the works in the listed query
      * @param page: the page of results to return
      */
-    suspend fun search(workSearchQuery: WorkSearchQuery, session: Session? = null, page: Int = 1): SearchResult {
+    suspend fun search(workSearchQuery: WorkSearchQuery, session: Session? = null, page: Int = 1): SearchResult<Work> {
         val response: HttpResponse =
             httpClient.getWithSession(locations.search_loc(workSearchQuery.workSearchString(), page), session)
-        return searchParser.parsePage(response.receive())
+        return searchParser.parsePage(response.body())
     }
 
     /**
@@ -132,7 +137,7 @@ class AO3Wrapper(
         workSearchQuery: FilterWorkSearchQuery,
         session: Session? = null,
         page: Int = 1
-    ): TagSortAndFilterResult {
+    ): TagSortAndFilterResult<Work> {
         val response: HttpResponse =
             httpClient.getWithSession(
                 locations.filter_loc(
@@ -144,7 +149,7 @@ class AO3Wrapper(
                     ), page
                 ), session
             )
-        return sortAndFilterParser.parsePage(response.receive())
+        return sortAndFilterParser.parsePage(response.body())
     }
 
     suspend fun sortAndFilterUserWorks(
@@ -155,7 +160,7 @@ class AO3Wrapper(
         workSearchQuery: FilterWorkSearchQuery,
         session: Session? = null,
         page: Int = 1
-    ): UserQueryResult<TagSortAndFilterResult> {
+    ): UserQueryResult<TagSortAndFilterResult<Work>> {
         val response: HttpResponse =
             httpClient.getWithSession(
                 locations.filter_loc(
@@ -166,13 +171,13 @@ class AO3Wrapper(
                     ), page
                 ), session
             )
-        return userWorksParser.parsePage(response.receive())
+        return userWorksParser.parsePage(response.body())
     }
 
     suspend fun searchPeople(peopleQuery: PeopleQuery, session: Session? = null, page: Int = 1): PeopleResult {
         val response: HttpResponse =
             httpClient.getWithSession(locations.people_location(peopleSearch(peopleQuery), page), session)
-        return personWrapper.parsePage(response.receive())
+        return personWrapper.parsePage(response.body())
     }
 
     suspend fun searchBookmarks(
@@ -182,10 +187,22 @@ class AO3Wrapper(
     ): BookmarkSearchResult {
         val response: HttpResponse =
             httpClient.getWithSession(locations.bookmark_location(bookmarkSearch(bookmarkQuery), page), session)
-        return bookmarkParser.parsePage(response.receive())
+        return bookmarkParser.parsePage(response.body())
     }
 
-    suspend fun sortAndFilterBookmarks() {
+    suspend fun sortAndFilterBookmarks(
+        user: String,
+        pseudonym: String? = null,
+        bookmarkQuery: BookmarkQuery,
+        session: Session? = null,
+        page: Int = 1
+    ): UserQueryResult<BookmarkSortAndFilterResult> {
+        val response: HttpResponse =
+            httpClient.getWithSession(
+                locations.filter_loc_bookmarks(buildUserBookmarkSearchQuery(user, pseudonym, bookmarkQuery), page),
+                session
+            )
+        return userBookmarkParser.parsePage(response.body())
     }
 
     suspend fun sortAndFilterCollection() {
@@ -205,12 +222,12 @@ class AO3Wrapper(
      */
     suspend fun getUserGifts(user: String, page: Int = 1, session: Session? = null): UserQueryResult<GiftsResult> {
         val response: HttpResponse = httpClient.getWithSession(locations.user_gift_location(user, page), session)
-        return userGiftParser.parsePage(response.receive())
+        return userGiftParser.parsePage(response.body())
     }
 
     suspend fun getUserProfile(user: String, session: Session? = null): UserQueryResult<UserProfileResult> {
         val response: HttpResponse = httpClient.getWithSession(locations.user_profile_location(user), session)
-        return userProfileParser.parsePage(response.receive())
+        return userProfileParser.parsePage(response.body())
     }
 
     suspend fun getUserDashboard() {
@@ -227,12 +244,12 @@ class AO3Wrapper(
      * @return a list of works, this function does not guarantee that a work exists for each id
      */
     suspend fun getWorksByID(
-        workIds: List<Int>,
+        workIds: Collection<Int>,
         session: Session? = null,
         sortColumn: SortColumn = SortColumn.DATE_UPDATED,
         sortDirection: SortDirection = SortDirection.DESCENDING
-    ): List<Work> {
-        val works: MutableList<Work> = mutableListOf()
+    ): Set<Work> {
+        val works: MutableSet<Work> = mutableSetOf()
         val searchQuery = createIDSearchString(workIds)
         var currentPage = 1
         var endPage: Int
@@ -241,7 +258,7 @@ class AO3Wrapper(
                 WorkSearchQuery(query = searchQuery, sortColumn = sortColumn, sortDirection = sortDirection),
                 session, currentPage
             )
-            works.addAll(result.works)
+            works.addAll(result.articles)
             endPage = result.navigation.pages
             currentPage++
         } while (currentPage < endPage)
@@ -259,7 +276,7 @@ class AO3Wrapper(
     suspend fun suggestAutoComplete(field: String, autoCompleteField: AutoCompleteField): List<AutoCompleteResult> {
         val response: HttpResponse =
             httpClient.get(locations.auto_complete(autoCompleteField.search_param, field.encode()))
-        return autoCompleteParser.parsePage(response.receive())
+        return autoCompleteParser.parsePage(response.body())
     }
 
     /**
@@ -282,7 +299,7 @@ class AO3Wrapper(
         val response: HttpResponse = httpClient.getWithSession(locations.chapter_navigation(workId), session)
         if (response.status != HttpStatusCode.OK)
             throw WorkDoesNotExistException(workId)
-        return chapterNavigationParser.parsePage(response.receive())
+        return chapterNavigationParser.parsePage(response.body())
     }
 
     /**
@@ -295,7 +312,7 @@ class AO3Wrapper(
         val response: HttpResponse = httpClient.getWithSession(ao3_chapter(chapterId), session)
         if (response.status != HttpStatusCode.OK)
             throw ChapterDoesNotExistException(chapterId)
-        return chapterParser.parsePage(response.receive())
+        return chapterParser.parsePage(response.body())
     }
 
     /**
@@ -313,7 +330,7 @@ class AO3Wrapper(
                     ?: throw WorkDoesNotExistException(workId)
             return getChapter(chapterLocation, session)
         }
-        return chapterParser.parsePage(response.receive())
+        return chapterParser.parsePage(response.body())
     }
 
     /**
@@ -337,7 +354,7 @@ class AO3Wrapper(
         getComments(locations.chapter_comment_location(chapterId, page), session)
 
     private suspend fun getComments(location: String, session: Session?): CommentResult {
-        return commentsParser.parsePage(httpClient.getCommentRequest(location, session).receive())
+        return commentsParser.parsePage(httpClient.getCommentRequest(location, session).body())
     }
 
     private suspend fun HttpClient.getCommentRequest(location: String, session: Session?): HttpResponse =
@@ -368,7 +385,7 @@ class AO3Wrapper(
          */
         val response: HttpResponse = httpClient.get(locations.login_loc)
 
-        val authToken: String = loginParser.parsePage(response.receive())
+        val authToken: String = loginParser.parsePage(response.body())
 
         val cookies: MutableMap<String, HttpCookie> = mutableMapOf()
         response.headers.getAll(HttpHeaders.SetCookie)?.forEach {
@@ -379,7 +396,7 @@ class AO3Wrapper(
 
         val loginResponse: HttpResponse = httpClient.post(locations.login_loc) {
             contentType(ContentType.Application.FormUrlEncoded)
-            body = loginForm(username, password, authToken, rememberMe)
+            setBody(loginForm(username, password, authToken, rememberMe))
             cookies[ao3_session_cookie]?.let { setCookie(ao3_session_cookie, it.value) }
         }
 
@@ -387,21 +404,7 @@ class AO3Wrapper(
             throw InvalidLoginException()
         }
 
-        val session = Session()
-        loginResponse.headers.getAll(HttpHeaders.SetCookie)?.forEach {
-            HttpCookie.parse(it)[0].also { cookie ->
-                when (cookie.name) {
-                    "_otwarchive_session" -> session.session_id = cookie.value
-                    "remember_user_token" -> session.remember_user_token = cookie.value
-                    "user_credentials" -> session.userCredentials = cookie.value
-                    "flash_is_set" -> {
-                    }
-                    else -> logger.warn("unused cookie ${cookie.name}, ${cookie.value}")
-                }
-            }
-        }
-
-        return session
+        return extractSession(loginResponse.headers)
     }
 
     /**
@@ -437,7 +440,7 @@ class AO3Wrapper(
         return createIDSearchString(works.map { work -> work.articleID })
     }
 
-    private fun createIDSearchString(workIds: List<Int>): String {
+    private fun createIDSearchString(workIds: Collection<Int>): String {
         return workIds.joinToString(" OR ") { "id:${it}" }
     }
 }

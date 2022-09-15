@@ -51,7 +51,7 @@ private data class HeaderValues(
 
 private val logger = KotlinLogging.logger {}
 
-internal fun articleExtractor(article: Element): ArticleResult {
+internal fun extractArticle(article: Element): ArticleResult {
     val headerValues =
         extractHeaderValues(article.getFirstByTag("h4").getElementsByTag("a"))
     return when (headerValues.articleType) {
