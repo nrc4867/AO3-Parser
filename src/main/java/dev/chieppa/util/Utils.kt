@@ -16,7 +16,7 @@ private val userRememberMeField = "user[remember_me]".encode()
 fun encodeParameter(name: String, value: String, array: Boolean = false) =
     "${name.encode()}${if (array) encodedArrayBraces else ""}=${value.encode()}"
 
-fun String.encode(charset: Charset = StandardCharsets.UTF_8): String = URLEncoder.encode(this, charset)
+fun String.encode(charset: Charset = StandardCharsets.UTF_8): String = URLEncoder.encode(this, charset.toString())
 
 fun String.commaSeparatedToInt() = this.replace(",", "").toInt()
 

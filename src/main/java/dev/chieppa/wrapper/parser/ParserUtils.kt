@@ -74,7 +74,7 @@ internal fun Regex.getWithEmptyDefault(text: String) = getRegexFound(text, "")
 
 internal fun Element.flattenedHtml() = this.outerHtml().trim().replace("\n", "")
 
-internal fun Element.href() = URLDecoder.decode(this.attr("href"), Charset.defaultCharset())
+internal fun Element.href() = URLDecoder.decode(this.attr("href"), Charset.defaultCharset().toString())
 
 internal fun Element.getFirstByTag(tagName: String) = this.getElementsByTag(tagName)[0]
 internal fun Element.getFirstByClass(className: String) = this.getElementsByClass(className)[0]
