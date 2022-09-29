@@ -247,7 +247,8 @@ class AO3Wrapper(
         workIds: Collection<Int>,
         session: Session? = null,
         sortColumn: SortColumn = SortColumn.DATE_UPDATED,
-        sortDirection: SortDirection = SortDirection.DESCENDING
+        sortDirection: SortDirection = SortDirection.DESCENDING,
+        betweenPages: suspend (SearchResult<Work>) -> Unit = { },
     ): Set<Work> {
         val works: MutableSet<Work> = mutableSetOf()
         val searchQuery = createIDSearchString(workIds)
@@ -258,6 +259,7 @@ class AO3Wrapper(
                 WorkSearchQuery(query = searchQuery, sortColumn = sortColumn, sortDirection = sortDirection),
                 session, currentPage
             )
+            betweenPages(result)
             works.addAll(result.articles)
             endPage = result.navigation.pages
             currentPage++
