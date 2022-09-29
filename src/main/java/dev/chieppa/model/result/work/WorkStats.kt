@@ -1,5 +1,6 @@
 package dev.chieppa.model.result.work
 
+import dev.chieppa.util.TemporalAccessorSerializer
 import java.io.Serializable
 import java.time.temporal.TemporalAccessor
 
@@ -35,15 +36,21 @@ data class SeriesStats(
 ): Stats<WorkSearchDateStat>, Serializable
 
 interface DateStatistic {
+    @kotlinx.serialization.Serializable(with = TemporalAccessorSerializer::class)
     val dateUpdated: TemporalAccessor
 }
 
 @kotlinx.serialization.Serializable
-data class WorkSearchDateStat(override val dateUpdated: TemporalAccessor) : DateStatistic, Serializable
+data class WorkSearchDateStat(
+    @kotlinx.serialization.Serializable(with = TemporalAccessorSerializer::class)
+    override val dateUpdated: TemporalAccessor
+) : DateStatistic, Serializable
 
 @kotlinx.serialization.Serializable
 data class WorkMetaDateStat(
+    @kotlinx.serialization.Serializable(with = TemporalAccessorSerializer::class)
     override val dateUpdated: TemporalAccessor,
+    @kotlinx.serialization.Serializable(with = TemporalAccessorSerializer::class)
     val datePublished: TemporalAccessor,
     val complete: Boolean
 ) : DateStatistic, Serializable
