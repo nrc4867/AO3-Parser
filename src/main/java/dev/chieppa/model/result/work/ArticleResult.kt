@@ -1,6 +1,7 @@
 package dev.chieppa.model.result.work
 
 import dev.chieppa.constants.workproperties.Language
+import dev.chieppa.constants.workproperties.TagType
 import java.io.Serializable
 
 interface ArticleResult {
@@ -8,7 +9,7 @@ interface ArticleResult {
     val archiveSymbols: ArchiveSymbols
     val title: String
     val creators: List<Creator>
-    val tags: List<Tag>
+    val tags: Map<TagType, List<String>>
     val summary: String
     val stats: Stats<WorkSearchDateStat>
 }
@@ -22,7 +23,7 @@ data class Work(
     override val title: String,
     override val creators: List<Creator>,
     val createdFor: List<String>,
-    override val tags: List<Tag>,
+    override val tags: Map<TagType, List<String>>,
     override val summary: String,
     val series: List<WorkAssociatedSeries>,
     val language: Language,
@@ -44,7 +45,7 @@ data class ExternalWork(
     override val archiveSymbols: ArchiveSymbols,
     override val title: String,
     override val creators: List<Creator>,
-    override val tags: List<Tag>,
+    override val tags: Map<TagType, List<String>>,
     override val summary: String,
     override val stats: ExternalWorkStats
 ) : ArticleResult, Serializable
@@ -55,7 +56,7 @@ data class Series(
     override val title: String,
     override val archiveSymbols: ArchiveSymbols,
     override val creators: List<Creator>,
-    override val tags: List<Tag>,
+    override val tags: Map<TagType, List<String>>,
     override val summary: String,
     override val stats: SeriesStats
 ) : ArticleResult, Serializable

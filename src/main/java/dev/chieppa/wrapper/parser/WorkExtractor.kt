@@ -175,19 +175,20 @@ private fun extractHeaderValues(links: Elements): HeaderValues {
     return HeaderValues(articleType, digitsRegex.getWithZeroDefault(storyLink.href()), title, authors)
 }
 
-private fun extractTagValues(links: Elements): List<Tag> =
-    links.map {
-        Tag(
-            it.text(),
-            tagTypeMap.getOrDefault(
-                tagTypeRegex.getRegexFound(
-                    getTagType(
-                        it.parent() ?: throw ExpectedElementException("parent", "could not get parent element")
-                    )
-                ), UNKNOWN
-            )
-        )
+private fun extractTagValues(links: Elements): Map<TagType, List<String>> {
+    val tagMap = HashMap<TagType, MutableList<String>>()
+    for (value in TagType.values()) {
+        tagMap[value] = mutableListOf()
     }
+
+    links.forEach {
+        val tagTypeStr = tagTypeRegex.getRegexFound(getTagType(it.parent() ?: throw ExpectedElementException("parent", "could not get parent element")))
+        val tagType = tagTypeMap.getOrDefault(tagTypeStr, UNKNOWN)
+        tagMap[tagType]!!.add(it.text())
+    }
+
+    return tagMap
+}
 
 
 private fun getTagType(tag: Element): String {
