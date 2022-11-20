@@ -29,8 +29,11 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.core.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import java.net.HttpCookie
+import java.net.URLDecoder
 
 class AO3Wrapper(
     private var httpClient: HttpClient = HttpClient { ao3HttpClientConfig("generic-ao3-wrapper") },
@@ -379,6 +382,39 @@ class AO3Wrapper(
         return when (response.status) {
             HttpStatusCode.OK -> tagSummaryParser.parsePage(response.body())
             else -> null
+        }
+    }
+
+    suspend fun getMergerTag(tag: String): String? {
+        val response = httpClient.head(
+            URLBuilder(
+                protocol = URLProtocol.HTTPS,
+                host = ao3_host,
+                pathSegments = listOf("tags", tag, "works"),
+                parameters = Parameters.build {
+                    append("page", "100000000000")
+                }
+            ).buildString()
+        )
+        if (response.status == HttpStatusCode.OK) {
+            return tag
+        }
+
+        val location = response.headers[HttpHeaders.Location] ?: return null
+
+        val merger = ParserRegex.tagMergerRegex.getRegexFound(location) ?: return null
+
+        return withContext(Dispatchers.IO) {
+            URLDecoder.decode(merger, Charsets.UTF_8.toString())
+        }.replace(ParserRegex.tagURLHelperRegex) {
+            return@replace when (it.value) {
+                "*s*" -> "/"
+                "*a*" -> "&"
+                "*d*" -> "."
+                "*q*" -> "?"
+                "*h*" -> "#"
+                else -> it.value
+            }
         }
     }
 

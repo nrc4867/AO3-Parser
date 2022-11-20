@@ -55,6 +55,9 @@ internal object ParserRegex {
     val commentTreeReplacementForwardSlash: Regex by lazy { Regex("\\\\/") }
 
     val userDashboardRegex: Regex by lazy { Regex(".+(?= \\()") }
+
+    val tagMergerRegex: Regex by lazy { Regex("(?<=/tags/).*(?=/works)") }
+    val tagURLHelperRegex: Regex by lazy { Regex("\\*s\\*|\\*a\\*|\\*d\\*|\\*q\\*|\\*h\\*") }
 }
 
 internal object DateTimeFormats {
