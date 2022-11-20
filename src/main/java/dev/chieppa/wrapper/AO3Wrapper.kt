@@ -443,7 +443,7 @@ class AO3Wrapper(
     }
 
     private fun createIDSearchString(workIds: Collection<Int>): String {
-        return workIds.joinToString(" OR ") { "id:${it}" }
+        return  "id:(" + workIds.joinToString(" OR ") { "$it" } + ")"
     }
 }
 
