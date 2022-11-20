@@ -17,5 +17,6 @@ data class LinkLocations(
     val user_location: (username: String) -> String = ao3_user_location,
     val filter_loc_bookmarks: (filter: String, page: Int) -> String = ao3_sort_and_filter_bookmarks,
     val user_profile_location: (username: String) -> String = ao3_user_profile_location,
-    val user_gift_location: (username: String, page: Int) -> String = ao3_user_gift_location
+    val user_gift_location: (username: String, page: Int) -> String = ao3_user_gift_location,
+    val tags_location: (tag: String) -> String = ao3_tag_location
 )

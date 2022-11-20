@@ -2,6 +2,7 @@ package dev.chieppa.wrapper
 
 import dev.chieppa.wrapper.constants.AutoCompleteField
 import dev.chieppa.wrapper.constants.ao3_chapter
+import dev.chieppa.wrapper.constants.ao3_host
 import dev.chieppa.wrapper.constants.ao3_session_cookie
 import dev.chieppa.wrapper.constants.workproperties.SortColumn
 import dev.chieppa.wrapper.constants.workproperties.SortDirection
@@ -106,6 +107,12 @@ class AO3Wrapper(
      * Parser for user profile
      */
     var userProfileParser = UserQueryParser(ProfileParser())
+
+    /**
+     * Parser for Tag summary
+     */
+    var tagSummaryParser = TagSummaryParser()
+
 
     /**
      * Perform a search
@@ -355,6 +362,26 @@ class AO3Wrapper(
     suspend fun getCommentsFromChapter(chapterId: Int, page: Int = 1, session: Session? = null): CommentResult =
         getComments(locations.chapter_comment_location(chapterId, page), session)
 
+    /**
+     * Get Summary Information about a tag
+     * @param tag: tag to get summary info about
+     */
+    suspend fun getTagSummary(tag: String): TagSummaryResult? {
+        val response = httpClient.getWithSession(
+            URLBuilder(
+                protocol = URLProtocol.HTTPS,
+                host = ao3_host,
+                pathSegments = listOf("tags", tag)
+            ).buildString(),
+            session = null
+        )
+
+        return when (response.status) {
+            HttpStatusCode.OK -> tagSummaryParser.parsePage(response.body())
+            else -> null
+        }
+    }
+
     private suspend fun getComments(location: String, session: Session?): CommentResult {
         return commentsParser.parsePage(httpClient.getCommentRequest(location, session).body())
     }
@@ -443,7 +470,7 @@ class AO3Wrapper(
     }
 
     private fun createIDSearchString(workIds: Collection<Int>): String {
-        return  "id:(" + workIds.joinToString(" OR ") { "$it" } + ")"
+        return "id:(" + workIds.joinToString(" OR ") { "$it" } + ")"
     }
 }
 

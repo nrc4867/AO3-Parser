@@ -1,6 +1,7 @@
 package dev.chieppa.wrapper.constants
 
-const val ao3_url: String = "https://archiveofourown.org"
+const val ao3_host = "archiveofourown.org"
+const val ao3_url: String = "https://$ao3_host"
 const val ao3_login: String = "$ao3_url/users/login"
 
 val ao3_search = { query: String, page: Int -> "$ao3_url/works/search?$query&page=$page" }
@@ -32,6 +33,8 @@ val ao3_work_comment_location =
 val ao3_user_location = { user: String -> "$ao3_url/users/$user" }
 val ao3_user_profile_location = { user: String -> "${ao3_user_location(user)}/profile" }
 val ao3_user_gift_location = { user: String, page: Int -> "${ao3_user_location(user)}/gifts?page=$page" }
+
+val ao3_tag_location = { tag: String -> "tags/$tag" }
 
 const val ao3_session_cookie = "_otwarchive_session"
 const val ao3_session_remember_user_token = "remember_user_token"
