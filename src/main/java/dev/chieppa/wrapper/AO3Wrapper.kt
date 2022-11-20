@@ -385,6 +385,11 @@ class AO3Wrapper(
         }
     }
 
+    /**
+     * Get the tag the provided tag was merged with
+     * @param tag: tag to query on
+     * @return: the merged tag (including provided tag), null if this tag is not canonical
+     */
     suspend fun getMergerTag(tag: String): String? {
         val response = httpClient.head(
             URLBuilder(
