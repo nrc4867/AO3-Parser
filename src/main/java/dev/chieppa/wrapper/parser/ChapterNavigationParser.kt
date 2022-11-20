@@ -1,8 +1,8 @@
 package dev.chieppa.wrapper.parser
 
-import dev.chieppa.model.result.chapter.ChapterNavigationResult
-import dev.chieppa.model.result.chapter.FullChapterInfo
-import dev.chieppa.model.result.work.Creator
+import dev.chieppa.wrapper.model.result.chapter.ChapterNavigationResult
+import dev.chieppa.wrapper.model.result.chapter.FullChapterInfo
+import dev.chieppa.wrapper.model.result.work.Creator
 import dev.chieppa.wrapper.parser.DateTimeFormats.YYYYMMdd
 import dev.chieppa.wrapper.parser.ParserRegex.authorPseudoRegex
 import dev.chieppa.wrapper.parser.ParserRegex.authorUserRegex

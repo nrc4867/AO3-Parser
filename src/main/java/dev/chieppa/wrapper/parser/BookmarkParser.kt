@@ -1,12 +1,12 @@
 package dev.chieppa.wrapper.parser
 
-import dev.chieppa.constants.workproperties.BookmarkType
-import dev.chieppa.constants.workproperties.parseBookmarkType
-import dev.chieppa.model.result.BookmarkSearchResult
-import dev.chieppa.model.result.bookmark.BookmarkResult
-import dev.chieppa.model.result.bookmark.BookmarkUserSection
-import dev.chieppa.model.result.work.ArticleResult
-import dev.chieppa.model.result.work.Creator
+import dev.chieppa.wrapper.constants.workproperties.BookmarkType
+import dev.chieppa.wrapper.constants.workproperties.parseBookmarkType
+import dev.chieppa.wrapper.model.result.BookmarkSearchResult
+import dev.chieppa.wrapper.model.result.bookmark.BookmarkResult
+import dev.chieppa.wrapper.model.result.bookmark.BookmarkUserSection
+import dev.chieppa.wrapper.model.result.work.ArticleResult
+import dev.chieppa.wrapper.model.result.work.Creator
 import dev.chieppa.wrapper.parser.DateTimeFormats.ddMMMYYYY
 import dev.chieppa.wrapper.parser.ParserRegex.authorUserRegex
 import dev.chieppa.wrapper.parser.ParserRegex.bookmarkerPseudo

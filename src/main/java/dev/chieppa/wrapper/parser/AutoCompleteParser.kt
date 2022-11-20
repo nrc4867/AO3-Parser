@@ -1,6 +1,6 @@
 package dev.chieppa.wrapper.parser
 
-import dev.chieppa.model.result.AutoCompleteResult
+import dev.chieppa.wrapper.model.result.AutoCompleteResult
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 

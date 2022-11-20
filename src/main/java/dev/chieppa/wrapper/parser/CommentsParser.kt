@@ -1,9 +1,9 @@
 package dev.chieppa.wrapper.parser
 
-import dev.chieppa.model.result.CommentResult
-import dev.chieppa.model.result.comment.Comment
-import dev.chieppa.model.result.navigation.Navigation
-import dev.chieppa.model.result.work.Creator
+import dev.chieppa.wrapper.model.result.CommentResult
+import dev.chieppa.wrapper.model.result.comment.Comment
+import dev.chieppa.wrapper.model.result.navigation.Navigation
+import dev.chieppa.wrapper.model.result.work.Creator
 import dev.chieppa.wrapper.parser.DateTimeFormats.commentDate
 import dev.chieppa.wrapper.parser.ParserRegex.authorUserRegex
 import dev.chieppa.wrapper.parser.ParserRegex.chapterCurrentRegex

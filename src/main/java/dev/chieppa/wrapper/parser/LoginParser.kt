@@ -1,6 +1,6 @@
 package dev.chieppa.wrapper.parser
 
-import dev.chieppa.exception.loginexception.NoCSRFTokenException
+import dev.chieppa.wrapper.exception.loginexception.NoCSRFTokenException
 import org.jsoup.Jsoup
 
 /**

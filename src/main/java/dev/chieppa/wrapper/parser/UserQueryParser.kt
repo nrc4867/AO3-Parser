@@ -1,8 +1,8 @@
 package dev.chieppa.wrapper.parser
 
-import dev.chieppa.model.result.UserPseuds
-import dev.chieppa.model.result.UserQueryResult
-import dev.chieppa.model.result.work.Creator
+import dev.chieppa.wrapper.model.result.UserPseuds
+import dev.chieppa.wrapper.model.result.UserQueryResult
+import dev.chieppa.wrapper.model.result.work.Creator
 import dev.chieppa.wrapper.parser.ParserRegex.authorPseudoRegex
 import dev.chieppa.wrapper.parser.ParserRegex.authorUserRegex
 import dev.chieppa.wrapper.parser.ParserRegex.digitsRegex

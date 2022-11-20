@@ -1,13 +1,12 @@
 package dev.chieppa.wrapper.parser
 
-import dev.chieppa.constants.SummaryType
-import dev.chieppa.constants.workproperties.Language
-import dev.chieppa.constants.workproperties.Language.Companion.languageMap
-import dev.chieppa.constants.workproperties.TagType
-import dev.chieppa.constants.workproperties.TagType.*
-import dev.chieppa.model.result.chapter.*
-import dev.chieppa.model.result.work.*
-import dev.chieppa.util.commaSeparatedToInt
+import dev.chieppa.wrapper.constants.SummaryType
+import dev.chieppa.wrapper.constants.workproperties.Language
+import dev.chieppa.wrapper.constants.workproperties.Language.Companion.languageMap
+import dev.chieppa.wrapper.constants.workproperties.TagType
+import dev.chieppa.wrapper.constants.workproperties.TagType.*
+import dev.chieppa.wrapper.model.result.chapter.*
+import dev.chieppa.wrapper.model.result.work.*
 import dev.chieppa.wrapper.parser.DateTimeFormats.YYYYMMddEscaped
 import dev.chieppa.wrapper.parser.ParserRegex.authorPseudoRegex
 import dev.chieppa.wrapper.parser.ParserRegex.authorUserRegex
@@ -18,6 +17,7 @@ import dev.chieppa.wrapper.parser.ParserRegex.collectionRegex
 import dev.chieppa.wrapper.parser.ParserRegex.digitsRegex
 import dev.chieppa.wrapper.parser.ParserRegex.giftRegex
 import dev.chieppa.wrapper.parser.ParserRegex.inspiredTranslationRegex
+import dev.chieppa.wrapper.util.commaSeparatedToInt
 import mu.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element

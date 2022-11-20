@@ -1,6 +1,6 @@
 package dev.chieppa.wrapper.parser
 
-import dev.chieppa.model.result.GiftsResult
+import dev.chieppa.wrapper.model.result.GiftsResult
 import org.jsoup.Jsoup
 
 class GiftsParser: Parser<GiftsResult> {

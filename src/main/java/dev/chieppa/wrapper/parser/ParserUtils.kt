@@ -1,6 +1,6 @@
 package dev.chieppa.wrapper.parser
 
-import dev.chieppa.exception.parserexception.ExpectedElementByIDException
+import dev.chieppa.wrapper.exception.parserexception.ExpectedElementByIDException
 import org.jsoup.nodes.Element
 import java.net.URLDecoder
 import java.nio.charset.Charset

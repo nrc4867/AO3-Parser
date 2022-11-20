@@ -1,9 +1,9 @@
 package dev.chieppa.wrapper.parser
 
-import dev.chieppa.model.result.SearchResult
-import dev.chieppa.model.result.filterSidebar.*
-import dev.chieppa.model.result.filterSidebar.Recommendation.*
-import dev.chieppa.model.result.work.ArticleResult
+import dev.chieppa.wrapper.model.result.SearchResult
+import dev.chieppa.wrapper.model.result.filterSidebar.*
+import dev.chieppa.wrapper.model.result.filterSidebar.Recommendation.*
+import dev.chieppa.wrapper.model.result.work.ArticleResult
 import dev.chieppa.wrapper.parser.ParserRegex.digitsRegex
 import dev.chieppa.wrapper.parser.ParserRegex.endWorkRegex
 import dev.chieppa.wrapper.parser.ParserRegex.foundWorksRegex

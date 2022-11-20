@@ -1,8 +1,8 @@
 package dev.chieppa.wrapper.parser
 
-import dev.chieppa.model.result.BookmarkSearchResult
-import dev.chieppa.model.result.filterSidebar.BookmarkSortAndFilterResult
-import dev.chieppa.model.result.filterSidebar.Recommendation.*
+import dev.chieppa.wrapper.model.result.BookmarkSearchResult
+import dev.chieppa.wrapper.model.result.filterSidebar.BookmarkSortAndFilterResult
+import dev.chieppa.wrapper.model.result.filterSidebar.Recommendation.*
 import org.jsoup.Jsoup
 
 class UserBookmarkParser(private val bookmarkParser: Parser<BookmarkSearchResult>) : Parser<BookmarkSortAndFilterResult> {

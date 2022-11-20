@@ -1,8 +1,8 @@
 package dev.chieppa.wrapper.parser
 
-import dev.chieppa.model.result.PeopleResult
-import dev.chieppa.model.result.people.FandomWork
-import dev.chieppa.model.result.people.Person
+import dev.chieppa.wrapper.model.result.PeopleResult
+import dev.chieppa.wrapper.model.result.people.FandomWork
+import dev.chieppa.wrapper.model.result.people.Person
 import dev.chieppa.wrapper.parser.ParserRegex.authorPseudoRegex
 import dev.chieppa.wrapper.parser.ParserRegex.authorUserRegex
 import dev.chieppa.wrapper.parser.ParserRegex.digitsRegex

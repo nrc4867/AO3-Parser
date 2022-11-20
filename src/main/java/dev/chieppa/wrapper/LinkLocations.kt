@@ -1,6 +1,6 @@
 package dev.chieppa.wrapper
 
-import dev.chieppa.constants.*
+import dev.chieppa.wrapper.constants.*
 
 data class LinkLocations(
     val login_loc: String = ao3_login,

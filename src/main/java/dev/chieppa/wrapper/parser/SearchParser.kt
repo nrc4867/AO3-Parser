@@ -1,7 +1,7 @@
 package dev.chieppa.wrapper.parser
 
-import dev.chieppa.model.result.SearchResult
-import dev.chieppa.model.result.work.ArticleResult
+import dev.chieppa.wrapper.model.result.SearchResult
+import dev.chieppa.wrapper.model.result.work.ArticleResult
 import dev.chieppa.wrapper.parser.ParserRegex.resultsFoundRegex
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document

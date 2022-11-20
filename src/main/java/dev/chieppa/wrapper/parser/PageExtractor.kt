@@ -1,6 +1,6 @@
 package dev.chieppa.wrapper.parser
 
-import dev.chieppa.model.result.navigation.Navigation
+import dev.chieppa.wrapper.model.result.navigation.Navigation
 import org.jsoup.nodes.Element
 
 /**

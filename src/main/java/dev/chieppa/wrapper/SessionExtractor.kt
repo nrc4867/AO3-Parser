@@ -1,6 +1,6 @@
 package dev.chieppa.wrapper
 
-import dev.chieppa.model.Session
+import dev.chieppa.wrapper.model.Session
 import io.ktor.http.*
 import mu.KotlinLogging
 import java.net.HttpCookie
