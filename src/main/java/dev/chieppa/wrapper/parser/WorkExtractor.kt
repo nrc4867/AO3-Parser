@@ -1,6 +1,7 @@
 package dev.chieppa.wrapper.parser
 
 import dev.chieppa.constants.workproperties.*
+import dev.chieppa.constants.workproperties.TagType.CATEGORY
 import dev.chieppa.constants.workproperties.TagType.Companion.tagTypeMap
 import dev.chieppa.constants.workproperties.TagType.UNKNOWN
 import dev.chieppa.exception.parserexception.ExpectedAttributeException
@@ -122,6 +123,13 @@ internal fun extractWork(article: Element): Work {
 private fun extractWork(headerValues: HeaderValues, article: Element): Work {
     val stats = extractWorkStats(article.getFirstByClass("stats").getElementsByTag("dd"))
 
+    val tags = extractTagValues(article.getElementsByClass("tag")).toMutableMap()
+    if (!tags.containsKey(CATEGORY) || tags[CATEGORY]?.isEmpty() == true) {
+        tags += extractWorkCategories(
+            article.getFirstByClass("required-tags").getElementsByTag("span")[4].attr("title")
+        )
+    }
+
     return Work(
         articleID = headerValues.articleID,
         restricted = article.getFirstByTag("h4").getElementsByTag("img").isNotEmpty(),
@@ -132,7 +140,7 @@ private fun extractWork(headerValues: HeaderValues, article: Element): Work {
         title = headerValues.title,
         creators = headerValues.creator.filter { it.authorPseudoName != "" },
         createdFor = headerValues.creator.filter { it.authorPseudoName == "" }.map { it.authorUserName },
-        tags = extractTagValues(article.getElementsByClass("tag")),
+        tags = tags,
         summary = article.getElementsByTag("blockquote").firstOrNull()?.outerHtml() ?: "",
         series = article.getElementsByClass("series").firstOrNull()?.let { extractWorkSeries(it) } ?: emptyList(),
         language = stats.language ?: Language.UNKNOWN,
@@ -209,6 +217,11 @@ private fun extractRequiredTags(links: Elements): ArchiveSymbols {
         completionStatus = CompletionStatus.completionStatusMap[getFirstClass(links[6].className())]
             ?: throw SearchParserException("required_tag completion_status", getFirstClass(links[6].className()))
     )
+}
+
+private fun extractWorkCategories(title: String): Map<TagType, List<String>> {
+    val categories = title.split(", ")
+    return mapOf(Pair(CATEGORY, categories))
 }
 
 private fun extractWorkSeries(seriesList: Element): MutableList<WorkAssociatedSeries> {
