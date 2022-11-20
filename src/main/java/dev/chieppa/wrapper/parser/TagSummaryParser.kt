@@ -71,7 +71,7 @@ class TagSummaryParser : Parser<TagSummaryResult> {
     private fun getSubtags(tagBody: Element, group: String): List<String> {
         return tagBody.getElementsByClass(group)
             .first()
-            ?.getElementsByTag("li")
+            ?.getElementsByTag("a")
             ?.map { it.text() }
             ?.toList()
             ?: emptyList()
