@@ -48,7 +48,7 @@ class TagSummaryParser : Parser<TagSummaryResult> {
     }
 
     private fun canFilter(tagBody: Element): Boolean {
-        return tagBody.getFirstByTag("p").getElementsByTag("a").isNotEmpty()
+        return tagBody.getElementsByClass("navigation").first()?.run { true } ?: false
     }
 
     private fun getMerger(tagBody: Element): String? {
