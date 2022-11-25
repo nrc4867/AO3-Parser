@@ -53,6 +53,10 @@ dependencies {
 
 publishing {
     publications.create<MavenPublication>("maven") {
+        this.groupId = "dev.chieppa"
+        this.artifactId = "ao3_wrapper"
+        this.version = "1.0"
+
         from(components["java"])
     }
 }
