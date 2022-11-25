@@ -215,14 +215,14 @@ class AO3Wrapper(
         return userBookmarkParser.parsePage(response.body())
     }
 
-    suspend fun sortAndFilterCollection() {
-    }
-
-    suspend fun getUserSeries() {
-    }
-
-    suspend fun getUserCollections() {
-    }
+//    suspend fun sortAndFilterCollection() {
+//    }
+//
+//    suspend fun getUserSeries() {
+//    }
+//
+//    suspend fun getUserCollections() {
+//    }
 
     /**
      * Get the gifts given to this user.
@@ -240,8 +240,8 @@ class AO3Wrapper(
         return userProfileParser.parsePage(response.body())
     }
 
-    suspend fun getUserDashboard() {
-    }
+//    suspend fun getUserDashboard() {
+//    }
 
     /**
      * Get a list of works by supplied ID
@@ -450,7 +450,7 @@ class AO3Wrapper(
     @Throws(InvalidLoginException::class)
     suspend fun login(username: String, password: String, rememberMe: Boolean = false): Session {
 
-        /**
+        /*
          * I have to get a real login page to acquire a rails token
          */
         val response: HttpResponse = httpClient.get(locations.login_loc)
