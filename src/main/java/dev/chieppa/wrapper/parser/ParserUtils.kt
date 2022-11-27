@@ -15,7 +15,7 @@ internal object ParserRegex {
     val articleTypeRegex: Regex by lazy { Regex("(?<=/).*(?=/\\d)") }
     val resultsFoundRegex: Regex by lazy { digitsRegex }
     val workIDRegex: Regex by lazy { digitsRegex }
-    val authorUserRegex: Regex by lazy { Regex("(?<=/users/)[a-zA-Z_]+") }
+    val authorUserRegex: Regex by lazy { Regex("(?<=/users/)[a-zA-Z0-9_]+") }
     val authorPseudoRegex: Regex by lazy { Regex("(?<=pseuds[/])(.*)") }
     val chapterRegex: Regex by lazy { Regex("(?<=chapters[/])(.*)") }
     val chapterTotalRegex: Regex by lazy { Regex("(?<=\\d[/])(.*)") }
@@ -31,7 +31,7 @@ internal object ParserRegex {
     val foundWorksRegex: Regex by lazy { Regex("\\d+(?= Works)") }
 
     val tagWithoutDigitsRegex: Regex by lazy { Regex(".* ") }
-    val bookmarkerPseudo: Regex by lazy { Regex("(?<=pseuds[/])[a-zA-Z]+") }
+    val bookmarkerPseudo: Regex by lazy { Regex("(?<=pseuds[/])[a-zA-Z0-9_]+") }
 
     val personAttributeRegex: Regex by lazy { Regex("(bookmark)|(work in)|(works in)|(work)") }
     val workInRegex: Regex by lazy { Regex("(?<=in ).*") }
@@ -39,7 +39,7 @@ internal object ParserRegex {
 
     val collectionRegex: Regex by lazy { Regex("(?<=/collections/)\\w+") }
 
-    val giftRegex: Regex by lazy { Regex("(?<=/users/)[a-zA-Z]+(?=/gifts)") }
+    val giftRegex: Regex by lazy { Regex("(?<=/users/)[a-zA-Z0-9_]+(?=/gifts)") }
     val inspiredTranslationRegex: Regex by lazy { Regex("(?<=Translation into )[\\Wa-zA-Z]+(?= available\\W*)") }
 
     val totalCommentsRegex: Regex by lazy { Regex("(?<=Hide Comments \\()[1-9]*(?=\\).*)") }
