@@ -10,7 +10,7 @@ import org.jsoup.nodes.Element
 class SearchParser<E : ArticleResult>(
     val resultsFoundParser: (Element) -> Int = { mainBody: Element ->
         resultsFoundRegex.getWithZeroDefault(
-            mainBody.getFirstByTag("h3").text()
+            mainBody.getElementsByTag("h3").first()?.text() ?: ""
         )
     },
     val articleExtraction: (Element) -> E = { article -> extractArticle(article) as E }
