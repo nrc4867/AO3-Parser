@@ -56,14 +56,11 @@ class BookmarkParser : Parser<BookmarkSearchResult> {
 
     private fun parseBookmarkSymbol(article: Element): BookmarkType? {
         val status = article.getElementsByClass("status").getOrNull(0)
-        if (status != null)
-            return parseBookmarkType(
-                status
-                    .getElementsByClass("symbol")[0]
-                    .getElementsByTag("span")[0]
-                    .attr("class")
-            )
-        return null
+        return parseBookmarkType(
+            status?.getElementsByClass("symbol")?.getOrNull(0)
+                ?.getElementsByTag("span")?.getOrNull(0)
+                ?.attr("class") ?: BookmarkType.UNKNOWN.name
+        )
     }
 
 
