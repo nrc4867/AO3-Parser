@@ -31,20 +31,22 @@ import io.ktor.http.*
 import io.ktor.utils.io.core.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import mu.KotlinLogging
 import java.net.HttpCookie
 import java.net.URLDecoder
 
 class AO3Wrapper(
-    private var httpClient: HttpClient = HttpClient { ao3HttpClientConfig("generic-ao3-wrapper") },
+    private var requestApplicator: suspend (HttpRequestBuilder) -> HttpResponse,
     private val locations: LinkLocations = LinkLocations()
-) : Closeable {
+) {
 
-    constructor(userAgent: String) : this() {
-        httpClient = HttpClient { ao3HttpClientConfig(userAgent) }
+    constructor(userAgent: String) : this(requestApplicator = createRequestApplicator(userAgent))
+
+    companion object {
+        private fun createRequestApplicator(userAgent: String): suspend (HttpRequestBuilder) -> HttpResponse {
+            val httpClient = HttpClient { ao3HttpClientConfig(userAgent) }
+            return httpClient::request
+        }
     }
-
-    private val logger = KotlinLogging.logger { }
 
     /**
      * parser for the search results
@@ -125,8 +127,7 @@ class AO3Wrapper(
      * @param page: the page of results to return
      */
     suspend fun search(workSearchQuery: WorkSearchQuery, session: Session? = null, page: Int = 1): SearchResult<Work> {
-        val response: HttpResponse =
-            httpClient.getWithSession(locations.search_loc(workSearchQuery.workSearchString(), page), session)
+        val response: HttpResponse = getWithSession(locations.search_loc(workSearchQuery.workSearchString(), page), session)
         return searchParser.parsePage(response.body())
     }
 
@@ -148,17 +149,16 @@ class AO3Wrapper(
         session: Session? = null,
         page: Int = 1
     ): TagSortAndFilterResult<Work> {
-        val response: HttpResponse =
-            httpClient.getWithSession(
-                locations.filter_loc(
-                    buildTagSearchQuery(
-                        tagId,
-                        include,
-                        exclude,
-                        workSearchQuery
-                    ), page
-                ), session
-            )
+        val response: HttpResponse = getWithSession(
+            locations.filter_loc(
+                buildTagSearchQuery(
+                    tagId,
+                    include,
+                    exclude,
+                    workSearchQuery
+                ), page
+            ), session
+        )
         return sortAndFilterParser.parsePage(response.body())
     }
 
@@ -171,22 +171,20 @@ class AO3Wrapper(
         session: Session? = null,
         page: Int = 1
     ): UserQueryResult<TagSortAndFilterResult<Work>> {
-        val response: HttpResponse =
-            httpClient.getWithSession(
-                locations.filter_loc(
-                    buildUserSearchQuery(
-                        user, pseudonym,
-                        include, exclude,
-                        workSearchQuery
-                    ), page
-                ), session
-            )
+        val response: HttpResponse = getWithSession(
+            locations.filter_loc(
+                buildUserSearchQuery(
+                    user, pseudonym,
+                    include, exclude,
+                    workSearchQuery
+                ), page
+            ), session
+        )
         return userWorksParser.parsePage(response.body())
     }
 
     suspend fun searchPeople(peopleQuery: PeopleQuery, session: Session? = null, page: Int = 1): PeopleResult {
-        val response: HttpResponse =
-            httpClient.getWithSession(locations.people_location(peopleSearch(peopleQuery), page), session)
+        val response: HttpResponse = getWithSession(locations.people_location(peopleSearch(peopleQuery), page), session)
         return personWrapper.parsePage(response.body())
     }
 
@@ -195,8 +193,7 @@ class AO3Wrapper(
         session: Session? = null,
         page: Int = 1
     ): BookmarkSearchResult {
-        val response: HttpResponse =
-            httpClient.getWithSession(locations.bookmark_location(bookmarkSearch(bookmarkQuery), page), session)
+        val response: HttpResponse = getWithSession(locations.bookmark_location(bookmarkSearch(bookmarkQuery), page), session)
         return bookmarkParser.parsePage(response.body())
     }
 
@@ -207,11 +204,10 @@ class AO3Wrapper(
         session: Session? = null,
         page: Int = 1
     ): UserQueryResult<BookmarkSortAndFilterResult> {
-        val response: HttpResponse =
-            httpClient.getWithSession(
-                locations.filter_loc_bookmarks(buildUserBookmarkSearchQuery(user, pseudonym, bookmarkQuery), page),
-                session
-            )
+        val response: HttpResponse = getWithSession(
+            locations.filter_loc_bookmarks(buildUserBookmarkSearchQuery(user, pseudonym, bookmarkQuery), page),
+            session
+        )
         return userBookmarkParser.parsePage(response.body())
     }
 
@@ -231,12 +227,12 @@ class AO3Wrapper(
      * @param session: A session that has the permissions to view the works given to this user.
      */
     suspend fun getUserGifts(user: String, page: Int = 1, session: Session? = null): UserQueryResult<GiftsResult> {
-        val response: HttpResponse = httpClient.getWithSession(locations.user_gift_location(user, page), session)
+        val response: HttpResponse = getWithSession(locations.user_gift_location(user, page), session)
         return userGiftParser.parsePage(response.body())
     }
 
     suspend fun getUserProfile(user: String, session: Session? = null): UserQueryResult<UserProfileResult> {
-        val response: HttpResponse = httpClient.getWithSession(locations.user_profile_location(user), session)
+        val response: HttpResponse = getWithSession(locations.user_profile_location(user), session)
         return userProfileParser.parsePage(response.body())
     }
 
@@ -286,8 +282,10 @@ class AO3Wrapper(
      * @return a list of suggested completions for field
      */
     suspend fun suggestAutoComplete(field: String, autoCompleteField: AutoCompleteField): List<AutoCompleteResult> {
-        val response: HttpResponse =
-            httpClient.get(locations.auto_complete(autoCompleteField.search_param, field.encode()))
+        val response: HttpResponse = requestApplicator(HttpRequestBuilder().apply {
+                method = HttpMethod.Get
+                url(locations.auto_complete(autoCompleteField.search_param, field.encode()))
+            })
         return autoCompleteParser.parsePage(response.body())
     }
 
@@ -308,7 +306,7 @@ class AO3Wrapper(
      * @see getChapters
      */
     suspend fun getChapters(workId: Int, session: Session? = null): ChapterNavigationResult<FullChapterInfo> {
-        val response: HttpResponse = httpClient.getWithSession(locations.chapter_navigation(workId), session)
+        val response: HttpResponse = getWithSession(locations.chapter_navigation(workId), session)
         if (response.status != HttpStatusCode.OK)
             throw WorkDoesNotExistException(workId)
         return chapterNavigationParser.parsePage(response.body())
@@ -321,7 +319,7 @@ class AO3Wrapper(
      * @param session a session which has the permission to view this work
      */
     suspend fun getChapter(chapterId: Int, session: Session? = null): ChapterResult {
-        val response: HttpResponse = httpClient.getWithSession(ao3_chapter(chapterId), session)
+        val response: HttpResponse = getWithSession(ao3_chapter(chapterId), session)
         if (response.status != HttpStatusCode.OK)
             throw ChapterDoesNotExistException(chapterId)
         return chapterParser.parsePage(response.body())
@@ -335,7 +333,7 @@ class AO3Wrapper(
      * @param session: A session which has permission to view this work
      */
     suspend fun getFirstChapter(workId: Int, session: Session? = null): ChapterResult {
-        val response: HttpResponse = httpClient.getWithSession(locations.first_chapter_location(workId), session)
+        val response: HttpResponse = getWithSession(locations.first_chapter_location(workId), session)
         if (response.status == HttpStatusCode.Found) { // multi-chapter work
             val chapterLocation: Int =
                 response.headers[HttpHeaders.Location]?.substringAfterLast('/')?.toInt()
@@ -370,7 +368,7 @@ class AO3Wrapper(
      * @param tag: tag to get summary info about
      */
     suspend fun getTagSummary(tag: String): TagSummaryResult? {
-        val response = httpClient.getWithSession(
+        val response = getWithSession(
             URLBuilder(
                 protocol = URLProtocol.HTTPS,
                 host = ao3_host,
@@ -391,7 +389,8 @@ class AO3Wrapper(
      * @return: the merged tag (including provided tag), null if this tag is not canonical
      */
     suspend fun getMergerTag(tag: String): String? {
-        val response = httpClient.head(
+        val response = requestApplicator(HttpRequestBuilder().apply {
+            method = HttpMethod.Head
             URLBuilder(
                 protocol = URLProtocol.HTTPS,
                 host = ao3_host,
@@ -400,7 +399,7 @@ class AO3Wrapper(
                     append("page", "100000000000")
                 }
             ).buildString()
-        )
+        })
         if (response.status == HttpStatusCode.OK) {
             return tag
         }
@@ -424,11 +423,13 @@ class AO3Wrapper(
     }
 
     private suspend fun getComments(location: String, session: Session?): CommentResult {
-        return commentsParser.parsePage(httpClient.getCommentRequest(location, session).body())
+        return commentsParser.parsePage(getCommentRequest(location, session).body())
     }
 
-    private suspend fun HttpClient.getCommentRequest(location: String, session: Session?): HttpResponse =
-        this.get(location) {
+    private suspend fun getCommentRequest(location: String, session: Session?): HttpResponse =
+        requestApplicator(HttpRequestBuilder().apply {
+            method = HttpMethod.Get
+            url(location)
             setSession(session)
             // asks ao3 to return the jquery use to display the comments rather than the entire article
             header("X-Requested-With", "XMLHttpRequest")
@@ -436,7 +437,7 @@ class AO3Wrapper(
                 "Accept",
                 "*/*;q=0.5, text/javascript, application/javascript, application/ecmascript, application/x-ecmascript"
             )
-        }
+        })
 
     /**
      * Login - Create a Session for AO3
@@ -453,7 +454,10 @@ class AO3Wrapper(
         /*
          * I have to get a real login page to acquire a rails token
          */
-        val response: HttpResponse = httpClient.get(locations.login_loc)
+        val response: HttpResponse = requestApplicator(HttpRequestBuilder().apply {
+            method = HttpMethod.Get
+            url(locations.login_loc)
+        })
 
         val authToken: String = loginParser.parsePage(response.body())
 
@@ -464,11 +468,13 @@ class AO3Wrapper(
             }
         }
 
-        val loginResponse: HttpResponse = httpClient.post(locations.login_loc) {
+        val loginResponse: HttpResponse = requestApplicator(HttpRequestBuilder().apply {
+            method = HttpMethod.Post
+            url(locations.login_loc)
             contentType(ContentType.Application.FormUrlEncoded)
             setBody(loginForm(username, password, authToken, rememberMe))
             cookies[ao3_session_cookie]?.let { setCookie(ao3_session_cookie, it.value) }
-        }
+        })
 
         if (loginResponse.status.value != HttpStatusCode.Found.value) {
             throw InvalidLoginException()
@@ -484,15 +490,18 @@ class AO3Wrapper(
      * @return true if this user is being recognized as logged in
      */
     suspend fun validateSession(session: Session): Boolean {
-        val response: HttpResponse = httpClient.getWithSession(locations.login_loc, session)
+        val response: HttpResponse = getWithSession(locations.login_loc, session)
         return response.status == HttpStatusCode.Found
     }
 
-    private suspend fun HttpClient.getWithSession(location: String, session: Session?): HttpResponse =
-        this.get(location) {
-            setCookie("view_adult", "true")
+    private suspend fun getWithSession(location: String, session: Session?): HttpResponse {
+        return requestApplicator(HttpRequestBuilder().apply {
+            method = HttpMethod.Get
+            url(location)
             setSession(session)
-        }
+            setCookie("view_adult", "true")
+        })
+    }
 
     private fun HttpRequestBuilder.setSession(session: Session?) =
         session?.let {
@@ -500,11 +509,6 @@ class AO3Wrapper(
                 setSessionCookies()
             }
         }
-
-
-    override fun close() {
-        httpClient.close()
-    }
 
     private fun createSearchStringForWorks(works: List<Work>): String {
         return createIDSearchString(works.map { work -> work.articleID })
